@@ -1,0 +1,25 @@
+-series GW5AST
+-device GW5AST-138B
+-device_version B
+-package PBGA484A
+-part_number GW5AST-LV138PG484AC1/I0
+
+
+-mod_name vram_hi
+-file_name vram_hi
+-path D:/Gowin/dev/gba-experiments/06.gpu/src/gpu/
+-type RAM_DP
+-file_type vlg
+-bram_b true
+-dev_type GW5AST-138B
+-depth_0 8192
+-depth_1 8192
+-width_0 32
+-width_1 32
+-read_mode_0 bypass
+-read_mode_1 bypass
+-write_mode_0 normal
+-write_mode_1 normal
+-byteEnable 1
+-speed false
+-reset_mode sync
