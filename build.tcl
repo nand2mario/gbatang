@@ -59,7 +59,7 @@ add_file -type verilog "src/sound/gba_sound_ch1.v"
 add_file -type verilog "src/sound/gba_sound_ch3.v"
 add_file -type verilog "src/sound/gba_sound_ch4.v"
 add_file -type verilog "src/sound/gba_sound_dma.v"
-add_file -type verilog "src/test_loader.v"
+#add_file -type verilog "src/test_loader.v"
 
 set_option -synthesis_tool gowinsynthesis
 set_option -top_module gbatang_top

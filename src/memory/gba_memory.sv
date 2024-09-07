@@ -549,7 +549,7 @@ always @(posedge clk) begin
         endcase
 
         loading_r <= loading;
-        if (loading != loading_r) begin            // reset loader state
+        if (loading != loading_r) begin                 // reset loader state
             if (loading != 0)
                 $display("Loading stage %d", loading);
             else
@@ -557,6 +557,11 @@ always @(posedge clk) begin
             loader_addr <= {loading == 2'd1 ? 4'h8 : 4'hE, 24'b0};
             loader_writing <= 0;
             loader_start <= 1;
+            if (loading == 1) begin                     // reset backup settings on loading start
+                config_backup_type <= 0;
+                config_eeprom_type <= 1;
+                config_flash_backup <= 0;
+            end
         end
 
         // turning GBA on and off
@@ -588,10 +593,21 @@ wire sel_cartram= bram_addr[27:25] == 3'b111;                    // 64KB of cart
 
 // BIOS:        0:000000 - 0:003FFF (16KB)
 // `include "gba_bios.sv"
-`include "gba_bios_original.sv"
+// `include "gba_bios_original.sv"
+// always @(posedge clk) begin
+//     if (ce) begin
+//         rdata_bios <= GBA_BIOS[bram_addr[13:2]];
+//     end
+// end
+
+reg [31:0] mem_bios [0:4095];
+initial begin
+    // $readmemh("gba_bios_normmatt.hex", mem_bios);
+    $readmemh("gba_bios_cultofgba.hex", mem_bios);
+end
 always @(posedge clk) begin
     if (ce) begin
-        rdata_bios <= GBA_BIOS[bram_addr[13:2]];
+        rdata_bios <= mem_bios[bram_addr[13:2]];
     end
 end
 
