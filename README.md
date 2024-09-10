@@ -3,7 +3,7 @@
 
 <img src='doc/gbatang0.1.jpg' width=300 />
 
-This is a working but early-stage Gameboy Advance FPGA core for Sipeed [Tang Mega 138K](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k.html), [Mega 138K Pro](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k-pro.html) and the upcoming portable Sipeed Tang 60K board/handheld. 
+This is a working but early-stage Game Boy Advance FPGA core for Sipeed [Tang Mega 138K](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k.html), [Mega 138K Pro](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k-pro.html) and the upcoming portable Sipeed Tang 60K board/handheld. 
 
 The core outputs 720p HDMI video, accepts DS2 controller input, and supports all ROM sizes (up to 32MB). An open source BIOS is used so it can be used out of the box. ROMs are loaded from the SD card through a convenient menu system.  Some games do not work yet. The following are some that are verified to work,
 
