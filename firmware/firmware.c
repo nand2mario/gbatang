@@ -920,12 +920,23 @@ int loadgba(int rom) {
             // detect backup type
             if (gba_backup_type == GBA_BACKUP_NONE) {
                 if (detect == 0) {                                      // fast path
-                    if (w == 0x52504545)	                            // 'EEPR'
-                        detect = 1;                     
-                    else if (w == 0x53414c46)	                        // 'FLAS'
-                        detect = 2;                     
-                    else if (w == 0x4d415253)	                        // 'SRAM'
-                        detect = 3;
+                    switch (w) {
+                        case 0x52504545:                                // 'EEPR'
+                            detect = 1;
+                            break;
+                        case 0x53414c46:                                // 'FLAS'
+                            detect = 2;
+                            break;
+                        case 0x4d415253:                                // 'SRAM'
+                            detect = 3;
+                            break;
+                    }
+                    // if (w == 0x52504545)	                            
+                    //     detect = 1;                     
+                    // else if (w == 0x53414c46)	                        // 'FLAS'
+                    //     detect = 2;                     
+                    // else if (w == 0x4d415253)	                        // 'SRAM'
+                    //     detect = 3;
                 } else {
                     if (detect == 1 & w == 0x565f4d4f) {                // 'MO_V'
                         detect = 4;

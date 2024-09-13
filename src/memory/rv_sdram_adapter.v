@@ -71,20 +71,18 @@ always @(posedge clk) begin            // RV
                     rvst <= RV_READY;
                 end else begin
                     // 32-bit access
-                    rvst <= RV_DATA0;
+                    // rvst <= RV_DATA0;
+                    rv_word <= 1;
+                    mem_req_r <= ~mem_req_r;    // issue request 1
+                    rvst <= RV_REQ1;
                 end
             end
         end
 
-        RV_DATA0: begin                         // collect data from request 0
-            mem_dout0 <= mem_dout;
-            rv_word <= 1;
-            mem_req_r <= ~mem_req_r;            // issue request 1, delay 1 cycle to satisfy T_RC
-            rvst <= RV_REQ1;
-        end
-
-        RV_REQ1:
+        RV_REQ1: begin
+            mem_dout0 <= mem_dout;              // collect data from request 0
             rvst <= RV_WAIT1;
+        end
 
         RV_WAIT1:                               // wait for request 1 ack
             if (mem_req == mem_req_ack) begin
