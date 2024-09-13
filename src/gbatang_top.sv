@@ -152,7 +152,7 @@ always @(posedge clk16) begin           // reset logic
     if (rstCnt != 0) begin
         rstCnt <= rstCnt - 1;
     end else begin
-    // end else if (~s0)
+    // end else if (~s0) begin
         if (~resetn)
             $display("gbatang_top: reset done");
         resetn = 1;
@@ -454,7 +454,7 @@ gba2hdmi video (
 ////////////////////////////
 
 iosys #(.CORE_ID(3)) iosys (
-    .clk(clk16), .hclk(hclk), .resetn(resetn),
+    .clk(clk16), .hclk(hclk), .spi_clk(clk67), .resetn(resetn),
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
     .joy1(joy_btns), .joy2(12'b0),

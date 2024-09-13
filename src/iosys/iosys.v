@@ -38,7 +38,7 @@ module iosys #(
 (
     input clk,                      // SNES mclk
     input hclk,                     // hdmi clock
-//    input clkref,                   // 1/2 of mclk, for sdram access synchronization
+    input spi_clk,                  // clock for SD SPI (4x clk)
     input resetn,
 
     // OSD display interface
@@ -272,7 +272,7 @@ assign sd_dat1 = 1;
 assign sd_dat2 = 1;
 assign sd_dat3 = 0;
 simplespimaster simplespi (
-    .clk(clk), .resetn(resetn),
+    .clk(clk), .spi_clk(spi_clk), .resetn(resetn),
     .sck(sd_clk), .mosi(sd_cmd), .miso(sd_dat0),
     .reg_byte_we(simplespimaster_reg_byte_sel ? mem_wstrb[0] : 1'b0),
     .reg_word_we(simplespimaster_reg_word_sel ? mem_wstrb[0] : 1'b0),
