@@ -39,7 +39,7 @@ module gba_dma(clk100, reset, ce, gb_bus_din, gb_bus_dout, gb_bus_adr, gb_bus_rn
     output        dma_init_cycles;
     output [3:0]  dma_cycles_adrup;
     
-    output [16:0] dma_eepromcount;
+    output [16:0] dma_eepromcount;      // DMA3 transfer count for EEPROM size detection
     
     output [27:0] dma_bus_Adr;          // DMA address
     output        dma_bus_rnw;          // 1: read, 0: write

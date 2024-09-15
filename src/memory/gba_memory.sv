@@ -85,6 +85,7 @@ module gba_memory (
     input       [3:0]   dma_be,
     output reg [31:0]   dma_rdata,
     output reg          dma_done,       // mem_ready for dma
+    input      [16:0]   dma_eepromcount,    // for eeprom address length detection
 
     // MMIO register bus to various components
     output     [31:0]   gb_bus_din /* xsynthesis syn_keep=1 */, 
@@ -541,8 +542,9 @@ always @(posedge clk) begin
             if (loader_addr[2:0] == 0) begin
                 config_backup_type <= loader_data;
                 config_flash_backup <= (loader_data == 8'h1);
-                if (loader_data == 8'd3)        
-                    config_eeprom_type <= 0;            // 4 is 64kbit eeprom (default), 3 is 4kbit eeprom
+                // auto-detection works fine, so we don't need this
+                // if (loader_data == 8'd3)        
+                //     config_eeprom_type <= 0;            // 4 is 64kbit eeprom (default), 3 is 4kbit eeprom
             end
         end
 
@@ -679,7 +681,8 @@ assign oamram_we = (bram_wr & sel_oam) ? bram_be16b : 4'b0;
 gba_eeprom eeprom (
     .clk(clk), .rst(~resetn), .cs(sel_eeprom), .model(config_eeprom_type),
     .valid(bram_valid), .write(bram_wr), .ready(),
-    .din(bram_wdata[0]), .dout(rdata_eeprom)
+    .din(bram_wdata[0]), .dout(rdata_eeprom),
+    .dma_eepromcount(dma_eepromcount)
 );
 
 //////////////////////////////////////////////

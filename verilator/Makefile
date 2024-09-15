@@ -7,7 +7,7 @@ SRCS=$D/gbatang_top.sv $D/cpu/gba_cpu.v $D/cpu/gba_cpu_thumbdecoder.v \
 	$D/gpu/gba_gpu_timing.v $D/gpu/gba_gpu.v $D/gpu/gba_timer_module.v $D/gpu/gba_timer.v $D/common/sim_dpram_be.sv \
 	$D/memory/gba_memory.sv $D/memory/gba_flash_sram.sv $D/common/sim_spram_be.sv $D/common/eprocreg_gba.sv \
 	$D/common/syncramdual.v $D/common/dpram32_block.v $D/memory/gba_eeprom.sv \
-	$D/common/syncramdualnotpow2.v $D/peripherals/gba_joypad.v $D/memory/sdram_sim.v $D/test_loader.v \
+	$D/common/syncramdualnotpow2.v $D/peripherals/gba_joypad.v $D/memory/sdram_sim.v \
 	$D/sound/gba_sound.v $D/common/dual_clk_fifo.v $D/cpu/gba_interrupts.v\
 	$D/sound/gba_sound_ch1.v $D/sound/gba_sound_ch3.v $D/sound/gba_sound_ch4.v $D/sound/gba_sound_dma.v
 
@@ -33,7 +33,6 @@ verilate: ./obj_dir/V$N.cpp
 	@echo
 	@echo "### BUILDING SIM ###"
 	make -C obj_dir -f V$N.mk V$N
-	cp -a $D/roms obj_dir
 
 sim: ./obj_dir/V$N
 	@echo

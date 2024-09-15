@@ -37,7 +37,7 @@ uint32_t snes_backup_time;
 const int GBA_BACKUP_NONE = 0;
 const int GBA_BACKUP_FLASH = 1;
 const int GBA_BACKUP_SRAM = 2;
-const int GBA_BACKUP_EEPROM_4K = 3;     // EEPROM_V111 - Super Mario Advance (Japan)
+const int GBA_BACKUP_EEPROM = 3;     // EEPROM with size auto-detected
 const int GBA_BACKUP_EEPROM_64K = 4;    // Most EEPROM games
 int gba_backup_type;       // 0: none, 1: . auto detected from rom content
 bool gba_bios_loaded;
@@ -970,21 +970,17 @@ int loadgba(int rom) {
                             detect = 3;
                             break;
                     }
-                    // if (w == 0x52504545)	                            
-                    //     detect = 1;                     
-                    // else if (w == 0x53414c46)	                        // 'FLAS'
-                    //     detect = 2;                     
-                    // else if (w == 0x4d415253)	                        // 'SRAM'
-                    //     detect = 3;
                 } else {
-                    if (detect == 1 & w == 0x565f4d4f) {                // 'MO_V'
-                        detect = 4;
-                    } else if (detect == 4) {
-                        if ((w & 0xffff) == 0x3131)                     // '11'    EEPROM_V11*
-                            gba_backup_type = GBA_BACKUP_EEPROM_4K;
-                        else                                            // EEPROM_V12*
-                            gba_backup_type = GBA_BACKUP_EEPROM_64K;
+                    if (detect == 1 & w == 0x565f4d4f) {                // 'OM_V'
+                        gba_backup_type = GBA_BACKUP_EEPROM;
                         detect = 0;
+                    //     detect = 4;
+                    // } else if (detect == 4) {
+                    //     if ((w & 0xffff) == 0x3131)                     // '11'    EEPROM_V11*
+                    //         gba_backup_type = GBA_BACKUP_EEPROM_4K;
+                    //     else                                            // EEPROM_V12*
+                    //         gba_backup_type = GBA_BACKUP_EEPROM_64K;
+                    //     detect = 0;
                     } else if (detect == 2) {
                         if ( (  w & 0xffffff) == 0x565f48 |             // 'H_V'
                                 w == 0x32313548 |                       // 'H512'
@@ -1007,7 +1003,7 @@ int loadgba(int rom) {
             printf("%d/%dK %s", total >> 10, size >> 10, 
                 gba_backup_type == GBA_BACKUP_SRAM ? "SRAM" : 
                 gba_backup_type == GBA_BACKUP_FLASH ? "Flash" :
-                gba_backup_type == GBA_BACKUP_EEPROM_4K ? "EEPROM_4K" :
+                gba_backup_type == GBA_BACKUP_EEPROM ? "EEPROM" :
                 gba_backup_type == GBA_BACKUP_EEPROM_64K ? "EEPROM_64K" :
                 "");
         }

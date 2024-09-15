@@ -34,6 +34,7 @@ module gba_eeprom(
     input rst,
     input cs,
     input model,        // 0: 512 bytes (SMA), 1: 8KB (Boktai)
+    input [16:0] dma_eepromcount,   // DMA transfer count to detect model
 
     input valid,        // 1 bit serial memory interface
     input write,
@@ -92,6 +93,11 @@ always @(posedge clk) begin
         addr <= 0;
         off <= 0;
     end else begin
+        reg model_detected;     // 1: 64Kbits, 0: 4Kbits
+        model_detected <= model;
+        if (dma_eepromcount == 9 | dma_eepromcount == 73) model_detected <= 0;
+        else if (dma_eepromcount == 17 | dma_eepromcount == 81) model_detected <= 1;
+
         if (state == INIT) begin
             {addr,off} <= {addr,off} + 1;
             init_write <= 1;
@@ -112,13 +118,20 @@ always @(posedge clk) begin
             
             BIT2: if (write) begin
                 state <= din ? RD_ADDR : WR_ADDR;
-                cnt <= model ? 13 : 5;     // 14 bit or 6 bit address
+                cnt <= model_detected ? 13 : 5;     // 14 bit or 6 bit address
                 off <= 0;
             end
 
             RD_ADDR, WR_ADDR: if (write) begin
                 addr[cnt] <= din;
-                if (cnt == 0) state <= state == RD_ADDR ? RD_ZERO : WR_DATA;
+                if (cnt == 0) begin
+                    state <= state == RD_ADDR ? RD_ZERO : WR_DATA;
+
+                    if (state == RD_ADDR)
+                        $display("EEPROM read address %h", {addr[13:1], din});
+                    else
+                        $display("EEPROM write address %h", {addr[13:1], din});
+                end
                 cnt <= cnt - 1;
             end
 

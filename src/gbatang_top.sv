@@ -285,6 +285,8 @@ wire        rv_mem_we;
 wire        sdram_busy;
 wire        flash_backup_en;
 
+wire [16:0] dma_eepromcount;
+
 gba_memory mem (
     .clk(clk16), .resetn(resetn), .ce(1'b1),
     // CPU memory interface
@@ -295,7 +297,7 @@ gba_memory mem (
 
     .dma_on(dma_on), .dma_addr(dma_addr), .dma_wdata(dma_wdata), .dma_ena(dma_bus_ena), 
     .dma_wr(~dma_rnw), .dma_be(calc_byte_ena(dma_bus_acc, dma_addr[1:0])), 
-    .dma_rdata(dma_rdata), .dma_done(dma_bus_done),
+    .dma_rdata(dma_rdata), .dma_done(dma_bus_done), .dma_eepromcount(dma_eepromcount),
 
     // SDRAM interface
 	.sdram_addr(cpu_mem_addr), .sdram_wdata(cpu_mem_wdata), .sdram_rdata(cpu_mem_rdata), 
@@ -386,7 +388,7 @@ gba_dma dma (
     .sound_dma_req(sound_dma_req), .hblank_trigger(hblank_trigger), .vblank_trigger(vblank_trigger), 
     .videodma_start(videodma_start), .videodma_stop(videodma_stop), .dma_new_cycles(), 
     .dma_first_cycles(), .dma_dword_cycles(), .dma_toROM(), 
-    .dma_init_cycles(), .dma_cycles_adrup(), .dma_eepromcount(), 
+    .dma_init_cycles(), .dma_cycles_adrup(), .dma_eepromcount(dma_eepromcount), 
     .dma_bus_Adr(dma_addr), .dma_bus_rnw(dma_rnw), .dma_bus_ena(dma_bus_ena), 
     .dma_bus_acc(dma_bus_acc), .dma_bus_dout(dma_wdata), .dma_bus_din(dma_rdata), 
     .dma_bus_done(dma_bus_done), .dma_bus_unread(), .debug_dma()
