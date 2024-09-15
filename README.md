@@ -44,7 +44,11 @@ The project started as a port of the MiSTer GBA core to Tang FPGAs in June 2024.
 * Timing accuracy could use a lot of improvements. However, as a more "modern" console, GBA mostly uses interrupts and timers to keep time. So cycle-accuracy is not as important as previous consoles.
 * A softcore-based menu system is provided, similar to SNESTang and NESTang.
 
+## Documentation
+
+* [Building GBATang part 1 - overall design and CPU](https://nand2mario.github.io/posts/2024/gbatang_part_1/)
+
 ## Acknowledgements
-* [MiSTer GBA core](https://github.com/MiSTer-devel/GBA_MiSTer)
+* [MiSTer GBA core](https://github.com/MiSTer-devel/GBA_MiSTer) by [Robert Peip](https://github.com/RobertPeip)
 * [risclite's CPU core](https://github.com/risclite/ARM9-compatible-soft-CPU-core)
 
