@@ -7,13 +7,14 @@ This is a working but early-stage Game Boy Advance FPGA core for Sipeed [Tang Me
 
 The core outputs 720p HDMI video, accepts DS2 controller input, and supports all ROM sizes (up to 32MB). An open source BIOS is used so it can be used out of the box. ROMs are loaded from the SD card through a convenient menu system.  Some games do not work yet. The following are some that are verified to work,
 
-* Super Mario Advance 2 (Super Mario World) 
+* Super Mario Advance and 2, 3, 4 
 * F-ZERO Maximum Velocity
 * Donkey Kong Country
-* NES Classic Super Mario Brothers, IceClimber
-* and more
+* Bomberman Tournament
+* Metroid Fusion, Metroid - Zero Mission
+* and many more
 
-Missing things that I expect to implement include cartridge backup, SNES controller input, game compatibility fixes and ability to use original BIOS.
+Missing things that I expect to implement include cartridge backup, SNES controller input, and game compatibility fixes.
 
 Follow [me](https://x.com/nand2mario) on X to get updates. Also check out other cores in the series: [SNESTang](https://github.com/nand2mario/snestang) and [NESTang](https://github.com/nand2mario/nestang).
 
@@ -31,7 +32,7 @@ Then follow these steps to install the core (for detailed instructions, for now 
 
 4. Again use Gowin programmer. Program `gbatang_m138k.fs` or `gbatang_m138kpro.fs` to on-board flash at starting address 0x000000.
 
-5. Put GBA roms on the MicroSD card and insert it into the on-board MicroSD slot. Then power up the board.
+5. Put GBA roms and GBA BIOS on the MicroSD card. The 16KB GBA BIOS ROM should be named `gba_bios.bin` and placed at the root dir. Then insert the card into the on-board MicroSD slot and power up the board.
 
 ## About this project
 
