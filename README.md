@@ -24,7 +24,7 @@ You need the Tang Mega 138K or Tang Mega 138K Pro board. Or you can wait for the
 
 Then follow these steps to install the core (for detailed instructions, for now refer to [SNESTang installation](https://github.com/nand2mario/snestang/blob/main/doc/installation.md)),
 
-1. Download and install [Gowin IDE 1.9.10.02](https://cdn.gowinsemi.com.cn/Gowin_V1.9.10.02_x64_win.zip).
+1. Download and install [Gowin IDE 1.9.9](https://cdn.gowinsemi.com.cn/Gowin_V1.9.9_x64_win.zip).
 
 2. Download a [GBATang release](https://github.com/nand2mario/gbatang/releases).
 
