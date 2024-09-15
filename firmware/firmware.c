@@ -40,6 +40,8 @@ const int GBA_BACKUP_SRAM = 2;
 const int GBA_BACKUP_EEPROM_4K = 3;     // EEPROM_V111 - Super Mario Advance (Japan)
 const int GBA_BACKUP_EEPROM_64K = 4;    // Most EEPROM games
 int gba_backup_type;       // 0: none, 1: . auto detected from rom content
+bool gba_bios_loaded;
+bool gba_missing_bios_warned;
 
 char load_fname[1024];
 char load_buf[1024];
@@ -870,6 +872,43 @@ loadnes_end:
     return r;
 }
 
+// check if gba_bios.bin is present in the root directory
+// if not, warn user, if present, load it
+void gba_load_bios() {
+    if (gba_bios_loaded | gba_missing_bios_warned) return;
+
+    DEBUG("gba_load_bios start\n");
+    FILINFO fno;
+    if (f_stat("/gba_bios.bin", &fno) != FR_OK) {
+        message( "Cannot find /gba_bios.bin\n"
+                 "Using open source BIOS\n"
+                 "Expect low compatibility", 1);
+        gba_missing_bios_warned = 1;
+        return;
+    }
+
+    FIL f;
+    int r = 1;
+    unsigned br;
+    if (f_open(&f, "/gba_bios.bin", FA_READ) != FR_OK) {
+        message("Cannot open /gba_bios.bin", 1);
+        return;
+    }
+    snes_ctrl(4);
+    do {
+        if ((r = f_read(&f, load_buf, 1024, &br)) != FR_OK)
+            break;
+        for (int i = 0; i < br; i += 4) {
+            uint32_t w = *(uint32_t *)(load_buf + i);
+            snes_data(w);
+        }
+    } while (br == 1024);
+
+    f_close(&f);
+    gba_bios_loaded = 1;
+    DEBUG("gba_load_bios end\n");
+}
+
 // load a GBA rom file.
 // return 0 if successful
 int loadgba(int rom) {
@@ -984,6 +1023,8 @@ int loadgba(int rom) {
 
     snes_ctrl(3);
     snes_data(gba_backup_type);
+
+    gba_load_bios();
 
     status("Success");
     snes_running = true;

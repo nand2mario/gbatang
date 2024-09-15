@@ -50,7 +50,7 @@ module iosys #(
     input [11:0] joy2,              // joystick 2
 
     // ROM loading interface
-    output reg [1:0] rom_loading,   // 0-to-1 loading starts, 1-to-0 loading is finished
+    output reg [2:0] rom_loading,   // 0: idle, 1: rom loading, 2: cart ram loading, 3: configuration, 4: BIOS loading
     output [7:0] rom_do,            // first 64 bytes are snes header + 32 bytes after snes header 
     output reg rom_do_valid,        // strobe for rom_do
     
@@ -302,7 +302,7 @@ end
 always @(posedge clk) begin
     if (romload_reg_ctrl_sel && mem_wstrb) begin
         // control register
-        rom_loading <= mem_wdata[1:0];
+        rom_loading <= mem_wdata[2:0];
     end
 end
 

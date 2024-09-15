@@ -51,7 +51,7 @@ module gbatang_top (
     input [11:0] joy_btns,
     output gba_on,
 
-    input [1:0] loading,            // 0: gba on, 1: loading rom, 2: loading cartram, 3: set up flash backup
+    input [2:0] loading,            // 0: gba on, 1: loading rom, 2: loading cartram, 3: set up flash backup
     input [7:0] loader_do,
     input loader_do_valid,
 `endif
@@ -85,7 +85,7 @@ pll_33 pll33(.clkin(clk27), .clkout0(clk33), .clkout1(clk16), .clkout2(clk67), .
 pll_74 pll74(.clkin(clk27), .clkout0(hclk), .clkout1(hclk5));
 assign O_sdram_clk = clk67_p;
 
-wire [1:0]  loading;
+wire [2:0]  loading;
 wire        loader_do_valid;
 wire [7:0]  loader_do;
 `endif

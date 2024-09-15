@@ -108,7 +108,7 @@ module gba_memory (
     input               sdram_ready,
 
     // Loader interface
-    input       [1:0]   loading      /* xsynthesis syn_keep=1 */,     // 0: off, 1: ROM, 2: Cart RAM, 3: Config
+    input       [2:0]   loading      /* xsynthesis syn_keep=1 */,     // 0: off, 1: ROM, 2: Cart RAM, 3: Config, 4: BIOS
     input       [7:0]   loader_data  /* xsynthesis syn_keep=1 */, 
     input               loader_valid /* xsynthesis syn_keep=1 */,
     output reg          gbaon,          // GBA is turned on after loading goes from none-zero to zero
@@ -496,11 +496,12 @@ always @* begin
 end
 
 // rom loading
-reg [1:0] loading_r;
+reg [2:0] loading_r;
 reg [1:0] loader_buf_front;    // fifo 
 reg [1:0] loader_buf_back;   
 reg [1:0] loader_cnt;           // write cycle count
 reg loader_start;  
+reg [7:0] loader_bios_buf [0:2];
 always @(posedge clk) begin
     if (~resetn) begin
         loader_addr <= 0;
@@ -509,7 +510,7 @@ always @(posedge clk) begin
         gbaon <= 0;
     end else begin
         case (loading)
-        2'd1, 2'd2: begin                               // ROM or Cart RAM, write to SDRAM
+        1, 2: begin                               // ROM or Cart RAM, write to SDRAM
             if (loader_valid) begin                     // push data into fifo
                 loader_buf[loader_buf_front] <= loader_data;
                 loader_buf_front <= loader_buf_front + 1;
@@ -535,7 +536,7 @@ always @(posedge clk) begin
             end
         end
         
-        2'd3: if (loader_valid) begin                   // configuration
+        3: if (loader_valid) begin                   // configuration
             loader_addr[2:0] <= loader_addr[2:0] + 1;
             if (loader_addr[2:0] == 0) begin
                 config_backup_type <= loader_data;
@@ -543,6 +544,14 @@ always @(posedge clk) begin
                 if (loader_data == 8'd3)        
                     config_eeprom_type <= 0;            // 4 is 64kbit eeprom (default), 3 is 4kbit eeprom
             end
+        end
+
+        4: if (loader_valid) begin                  // 16KB BIOS
+            loader_addr[13:0] <= loader_addr[13:0] + 1;
+            if (loader_addr[1:0] == 2'd3)
+                mem_bios[loader_addr[13:2]] <= {loader_data, loader_bios_buf[2], loader_bios_buf[1], loader_bios_buf[0]};
+            else
+                loader_bios_buf[loader_addr[1:0]] <= loader_data;
         end
 
         default: ;
@@ -592,24 +601,12 @@ wire sel_gamepak= (bram_addr[27:26] == 2'b10 | bram_addr[27:24] == 4'hC);       
 wire sel_cartram= bram_addr[27:25] == 3'b111;                    // 64KB of cartridge RAM, mirrored to region E and F
 
 // BIOS:        0:000000 - 0:003FFF (16KB)
-// `include "gba_bios.sv"
-// `include "gba_bios_original.sv"
-// always @(posedge clk) begin
-//     if (ce) begin
-//         rdata_bios <= GBA_BIOS[bram_addr[13:2]];
-//     end
-// end
-
 reg [31:0] mem_bios [0:4095];
-initial begin
-    // $readmemh("gba_bios_normmatt.hex", mem_bios);
-    $readmemh("gba_bios_cultofgba.hex", mem_bios);
-end
-always @(posedge clk) begin
+initial $readmemh("gba_bios_cultofgba.hex", mem_bios);
+always @(posedge clk) 
     if (ce) begin
         rdata_bios <= mem_bios[bram_addr[13:2]];
     end
-end
 
 // IWRAM:       3:000000 - 3:007FFF (32KB)
 wire [31:0]     rdata_iwram0;
