@@ -1,6 +1,7 @@
 
 module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb_bus_rnw, gb_bus_ena, gb_bus_done, gb_bus_acc, gb_bus_be, gb_bus_rst, 
-        lockspeed, interframe_blend, maxpixels, shade_mode, hdmode2x_bg, hdmode2x_obj, bitmapdrawmode, pixel_out_x, pixel_out_2x, pixel_out_y, pixel_out_addr, pixel_out_data, pixel_out_we, pixel2_out_x, pixel2_out_data, pixel2_out_we, new_cycles, new_cycles_valid, 
+        lockspeed, interframe_blend, maxpixels, shade_mode, hdmode2x_bg, hdmode2x_obj, bitmapdrawmode, pixel_out_x, pixel_out_2x, pixel_out_y, pixel_out_addr, pixel_out_data, pixel_out_we, pixel2_out_x, pixel2_out_data, pixel2_out_we, 
+        //new_cycles, new_cycles_valid, 
         IRP_HBlank, IRP_VBlank, IRP_LCDStat, hblank_trigger_dma, vblank_trigger_dma, 
         videodma_start_dma, videodma_stop_dma, VRAM_Lo_addr, VRAM_Lo_datain, VRAM_Lo_dataout, VRAM_Lo_we, VRAM_Lo_be, VRAM_Hi_addr, VRAM_Hi_datain, VRAM_Hi_dataout, VRAM_Hi_we, VRAM_Hi_be, vram_blocked, OAMRAM_PROC_addr, OAMRAM_PROC_datain, OAMRAM_PROC_dataout, OAMRAM_PROC_we, PALETTE_BG_addr, PALETTE_BG_datain, PALETTE_BG_dataout, PALETTE_BG_we, PALETTE_OAM_addr, PALETTE_OAM_datain, PALETTE_OAM_dataout, PALETTE_OAM_we, DISPSTAT_debug);
     `include "pproc_bus_gba.sv"
@@ -33,8 +34,8 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
     output [17:0]             pixel2_out_data;
     output                    pixel2_out_we;
     
-    input [7:0]               new_cycles;
-    input                     new_cycles_valid;
+    // input [7:0]               new_cycles;
+    // input                     new_cycles_valid;
     
     // mclk pulse signals for CPU and DMA
     output reg                IRP_HBlank;
@@ -112,8 +113,8 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
         
         `GB_BUS_PORTS_INST,
         
-        .new_cycles(new_cycles),
-        .new_cycles_valid(new_cycles_valid),
+        // .new_cycles(new_cycles),
+        // .new_cycles_valid(new_cycles_valid),
         
         .IRP_HBlank(IRP_HBlank_fclk),
         .IRP_VBlank(IRP_VBlank_fclk),
@@ -267,22 +268,6 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
             mclk_r <= mclk;
             if (mclk & !mclk_r) fclk_cycle <= 1;            // sync cycle counter
 
-            hblank_trigger_dma <= 0;                        // default values
-            vblank_trigger_dma <= 0;
-            videodma_start_dma <= 0;
-            videodma_stop_dma <= 0;
-            IRP_HBlank <= 0;
-            IRP_VBlank <= 0;
-            IRP_LCDStat <= 0;
-
-            if (hblank_trigger) hblank_trigger_seen <= 1;   // capture fclk pulses
-            if (vblank_trigger) vblank_trigger_seen <= 1;
-            if (videodma_start) videodma_start_seen <= 1;
-            if (videodma_stop) videodma_stop_seen <= 1;
-            if (IRP_HBlank_fclk) IRP_HBlank_seen <= 1;
-            if (IRP_VBlank_fclk) IRP_VBlank_seen <= 1;
-            if (IRP_LCDStat_fclk) IRP_LCDStat_seen <= 1;
-
             if (fclk_cycle == FCLK_SPEED-1) begin
                 fclk_cycle <= 0;                            // reset cycle counter
             
@@ -302,6 +287,15 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
                 IRP_VBlank_seen <= 0;
                 IRP_LCDStat_seen <= 0;
             end
+
+            if (hblank_trigger) hblank_trigger_seen <= 1;   // capture fclk pulses
+            if (vblank_trigger) vblank_trigger_seen <= 1;
+            if (videodma_start) videodma_start_seen <= 1;
+            if (videodma_stop) videodma_stop_seen <= 1;
+            if (IRP_HBlank_fclk) IRP_HBlank_seen <= 1;
+            if (IRP_VBlank_fclk) IRP_VBlank_seen <= 1;
+            if (IRP_LCDStat_fclk) IRP_LCDStat_seen <= 1;
+
         end
     end
 

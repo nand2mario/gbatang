@@ -216,7 +216,7 @@ gba_gpu #(.FCLK_SPEED(3)) gpu (
     .pixel2_out_data(), .pixel2_out_we(), 
     
     // one cycle a time on phase 0
-    .new_cycles(8'd1), .new_cycles_valid(clk16 == 0),
+    // .new_cycles(8'd1), .new_cycles_valid(1'b1),
     
     .IRP_HBlank(IRP_HBlank), .IRP_VBlank(IRP_VBlank), .IRP_LCDStat(IRP_LCDStat), 
     .hblank_trigger_dma(hblank_trigger), .vblank_trigger_dma(vblank_trigger), 

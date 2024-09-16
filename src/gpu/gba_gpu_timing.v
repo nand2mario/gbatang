@@ -1,6 +1,7 @@
 // Generate timing signals for GPU using cycle counting
 module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_bus_adr, gb_bus_rnw, gb_bus_ena, gb_bus_done, gb_bus_acc, gb_bus_be, gb_bus_rst, 
-    new_cycles, new_cycles_valid, IRP_HBlank, IRP_VBlank, IRP_LCDStat, vram_block_mode, vram_blocked, videodma_start, videodma_stop, line_trigger, hblank_trigger, vblank_trigger, drawline, refpoint_update, newline_invsync, linecounter_drawer, pixelpos, DISPSTAT_debug);
+    //new_cycles, new_cycles_valid, 
+    IRP_HBlank, IRP_VBlank, IRP_LCDStat, vram_block_mode, vram_blocked, videodma_start, videodma_stop, line_trigger, hblank_trigger, vblank_trigger, drawline, refpoint_update, newline_invsync, linecounter_drawer, pixelpos, DISPSTAT_debug);
     `include "pproc_bus_gba.sv"
     `include "preg_gba_display.sv"
     parameter              is_simu = 0;
@@ -11,8 +12,8 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
     
     `GB_BUS_PORTS_DECL;
     
-    input [7:0]            new_cycles;                  // \ input to cycle counting from CPU
-    input                  new_cycles_valid;            // /
+    // input [7:0]            new_cycles;                  // \ input to cycle counting from CPU
+    // input                  new_cycles_valid;            // /
     
     output reg             IRP_HBlank;
     output reg             IRP_VBlank;
@@ -90,6 +91,8 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
                              REG_DISPSTAT_H_Blank_IRQ_Enable, REG_DISPSTAT_V_Blank_IRQ_Enable, REG_DISPSTAT_V_Counter_flag, 
                              REG_DISPSTAT_H_Blank_flag, REG_DISPSTAT_V_Blank_flag};
     
+    reg mclk_r;
+
     always @(posedge fclk)
          begin
             reg [11:0] cycles;
@@ -133,8 +136,11 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
                 //    GBRegs.Sect_display.DISPSTAT_H_Blank_flag.write(0);
                 // end if;
                 
-                if (new_cycles_valid)
-                    cycles = cycles + new_cycles;
+                // if (new_cycles_valid)
+                //     cycles = cycles + new_cycles;
+                mclk_r <= mclk;         // count CPU cycles for video timing
+                if (mclk & ~mclk_r)
+                    cycles = cycles + 1;
                 
                 case (gpustate)
                     tGPUState_VISIBLE :
