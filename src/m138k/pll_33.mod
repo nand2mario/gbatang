@@ -1,5 +1,5 @@
 -series GW5AST
--device GW5AST-138B
+-device GW5AST-138
 -device_version B
 -package PBGA484A
 -part_number GW5AST-LV138PG484AC1/I0
@@ -7,7 +7,7 @@
 
 -mod_name pll_33
 -file_name pll_33
--path D:/Gowin/dev/gba-experiments/12.sdram/src/m138k/
+-path F:/Gowin/dev/gbatang/src/m138k/
 -type PLL_ADV
 -file_type vlg
 -ssc false
@@ -26,7 +26,7 @@
 -dyn_dpa_en false
 -clkout0_bypass false
 -dyn_odiv0_sel false
--odiv0_sel 54
+-odiv0_sel 36
 -odiv0_frac_sel 0
 -dyn_dt0_sel false
 -clkout0_dt_dir 1

@@ -47,7 +47,7 @@ module gbatang_top (
     output UART_TXD,    
 `else           // Ports for Verilator
     input clk16,
-    input clk67,
+    input clk50,
     input [11:0] joy_btns,
     output gba_on,
 
@@ -77,11 +77,11 @@ wire clk27;         // intermediate 27Mhz clock for HDMI
 // pll_27 pll27(.clkin(clk105), .clkout0(clk27));
 pll_27 pll27(.clkin(clk50), .clkout0(clk27));
 
-wire clk16;         // main 16.7Mhz GBA CPU clock
-wire clk33;         // 33.62Mhz clock (2x 16.7Mhz GBA clock)
-wire clk67, clk67_p; // 67.2Mhz clock for sdram
+wire clk16;         // main clock: 16.7Mhz GBA CPU clock
+wire clk50;         // ppu clock:  3 x 16.7Mhz
+wire clk67, clk67_p;// ram clock:  67.2Mhz
 wire hclk, hclk5;   // 74.25Mhz hdmi 720p pixel clock
-pll_33 pll33(.clkin(clk27), .clkout0(clk33), .clkout1(clk16), .clkout2(clk67), .clkout3(clk67_p));
+pll_33 pll33(.clkin(clk27), .clkout0(clk50), .clkout1(clk16), .clkout2(clk67), .clkout3(clk67_p));
 pll_74 pll74(.clkin(clk27), .clkout0(hclk), .clkout1(hclk5));
 assign O_sdram_clk = clk67_p;
 
@@ -201,8 +201,8 @@ wire [3:0] palette_oam_we;
 
 wire phase = ~clk16;    // 0: internal GPU work, 1: get data from CPU
 
-gba_gpu #(.FCLK_SPEED(4)) gpu (
-    .fclk(clk67), .mclk(clk16), .phase(phase), .reset(~gbaon),
+gba_gpu #(.FCLK_SPEED(3)) gpu (
+    .fclk(clk50), .mclk(clk16), .phase(phase), .reset(~gbaon),
     `GB_BUS_PORTS_INST,
 
     // config
@@ -436,7 +436,7 @@ wire [10:0] overlay_x;
 wire [9:0] overlay_y;
 
 gba2hdmi video (
-	.clk(clk67), .resetn(resetn),
+	.clk(clk50), .resetn(resetn),
 	.clk_pixel(hclk), .clk_5x_pixel(hclk5),
     .pixel_data(pixel_out_data), .pixel_x(pixel_out_x), .pixel_y(pixel_out_y),
     .pixel_we(pixel_out_we),

@@ -10,7 +10,7 @@
 #include "Vgbatang_top.h"
 #include "Vgbatang_top___024root.h"
 #include "Vgbatang_top_gbatang_top.h"
-#include "Vgbatang_top_gba_gpu.h"
+#include "Vgbatang_top_gba_gpu__F3.h"
 #include "Vgbatang_top_gba_cpu.h"
 #include "Vgbatang_top_gba_gpu_drawer.h"
 #include "Vgbatang_top_dpram32_block.h"
@@ -85,9 +85,9 @@ static int clk16_last;
 static void loading_step()
 {
 	Vgbatang_top_gbatang_top *gba = top->gbatang_top;
-	clkcnt++;
-	top->clk67 = clkcnt & 1;
-	top->clk16 = (clkcnt >> 2) & 1;
+	clkcnt = clkcnt == 5 ? 0 : clkcnt + 1;
+	top->clk50 = clkcnt & 1;
+	top->clk16 = clkcnt >= 3;
 	top->eval();
 	if (trace_toggle && trace_loading) {
 		m_trace->dump(sim_time);
@@ -397,9 +397,9 @@ int main(int argc, char **argv, char **env)
 			// if (sim_time == 3 * 1000 * 1000)
 			// 	// top->joy_btns = 1 << 11;	// right shoulder button is on
 			// 	top->joy_btns = 1 << 10; // left shoulder button is on
-			clkcnt++;
-			top->clk67 = clkcnt & 1;
-			top->clk16 = (clkcnt >> 2) & 1;
+			clkcnt = clkcnt == 5 ? 0 : clkcnt + 1;
+			top->clk50 = clkcnt & 1;
+			top->clk16 = clkcnt >= 3;
 			top->eval();
 			posedge = (top->clk16 == 1 && clk16_last == 0);
 			clk16_last = top->clk16;
