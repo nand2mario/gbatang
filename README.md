@@ -3,7 +3,7 @@
 
 <img src='doc/gbatang0.1.jpg' width=300 />
 
-This is a working but early-stage Game Boy Advance FPGA core for Sipeed [Tang Mega 138K](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k.html), [Mega 138K Pro](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k-pro.html) and the upcoming portable Sipeed Tang 60K board/handheld. 
+This is a Game Boy Advance FPGA core for Sipeed [Tang Mega 138K](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k.html), [Mega 138K Pro](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k-pro.html) and the upcoming handheld TangConsole 60K. 
 
 The core outputs 720p HDMI video, accepts DS2 controller input, and supports all ROM sizes (up to 32MB). An open source BIOS is used so it can be used out of the box. ROMs are loaded from the SD card through a convenient menu system.  Some games do not work yet. The following are some that are verified to work,
 
@@ -24,7 +24,7 @@ You need the Tang Mega 138K or Tang Mega 138K Pro board. Or you can wait for the
 
 Then follow these steps to install the core (for detailed instructions, for now refer to [SNESTang installation](https://github.com/nand2mario/snestang/blob/main/doc/installation.md)),
 
-1. Download and install [Gowin IDE 1.9.10.02](https://cdn.gowinsemi.com.cn/Gowin_V1.9.10.02_x64_win.zip).
+1. Download and install [Gowin IDE 1.9.9](https://cdn.gowinsemi.com.cn/Gowin_V1.9.9_x64_win.zip).
 
 2. Download a [GBATang release](https://github.com/nand2mario/gbatang/releases).
 
@@ -44,7 +44,11 @@ The project started as a port of the MiSTer GBA core to Tang FPGAs in June 2024.
 * Timing accuracy could use a lot of improvements. However, as a more "modern" console, GBA mostly uses interrupts and timers to keep time. So cycle-accuracy is not as important as previous consoles.
 * A softcore-based menu system is provided, similar to SNESTang and NESTang.
 
+## Documentation
+
+* [Building GBATang part 1 - overall design and CPU](https://nand2mario.github.io/posts/2024/gbatang_part_1/)
+
 ## Acknowledgements
-* [MiSTer GBA core](https://github.com/MiSTer-devel/GBA_MiSTer)
+* [MiSTer GBA core](https://github.com/MiSTer-devel/GBA_MiSTer) by [Robert Peip](https://github.com/RobertPeip)
 * [risclite's CPU core](https://github.com/risclite/ARM9-compatible-soft-CPU-core)
 
