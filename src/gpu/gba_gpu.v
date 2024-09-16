@@ -4,6 +4,7 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
         IRP_HBlank, IRP_VBlank, IRP_LCDStat, hblank_trigger_dma, vblank_trigger_dma, 
         videodma_start_dma, videodma_stop_dma, VRAM_Lo_addr, VRAM_Lo_datain, VRAM_Lo_dataout, VRAM_Lo_we, VRAM_Lo_be, VRAM_Hi_addr, VRAM_Hi_datain, VRAM_Hi_dataout, VRAM_Hi_we, VRAM_Hi_be, vram_blocked, OAMRAM_PROC_addr, OAMRAM_PROC_datain, OAMRAM_PROC_dataout, OAMRAM_PROC_we, PALETTE_BG_addr, PALETTE_BG_datain, PALETTE_BG_dataout, PALETTE_BG_we, PALETTE_OAM_addr, PALETTE_OAM_datain, PALETTE_OAM_dataout, PALETTE_OAM_we, DISPSTAT_debug);
     `include "pproc_bus_gba.sv"
+    parameter                 FCLK_SPEED = 4;
     parameter                 is_simu = 0;
     input                     fclk;     // fast clock for everything GPU
     input                     mclk;     // 16Mhz main GBA clock
@@ -36,13 +37,13 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
     input                     new_cycles_valid;
     
     // mclk pulse signals for CPU and DMA
-    output                    IRP_HBlank;
-    output                    IRP_VBlank;
-    output                    IRP_LCDStat;    
-    output                    hblank_trigger_dma;
-    output                    vblank_trigger_dma;
-    output                    videodma_start_dma;
-    output                    videodma_stop_dma;
+    output reg                IRP_HBlank;
+    output reg                IRP_VBlank;
+    output reg                IRP_LCDStat;    
+    output reg                hblank_trigger_dma;
+    output reg                vblank_trigger_dma;
+    output reg                videodma_start_dma;
+    output reg                videodma_stop_dma;
     
     input [13:0]              VRAM_Lo_addr;
     input [31:0]              VRAM_Lo_datain;
@@ -99,7 +100,11 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
     wire                      videodma_start;
     wire                      videodma_stop;
     
-    gba_gpu_timing #(is_simu) igba_gpu_timing(
+    wire                      IRP_HBlank_fclk;      // for converting to mclk
+    wire                      IRP_VBlank_fclk;
+    wire                      IRP_LCDStat_fclk;
+
+    gba_gpu_timing #(.is_simu(is_simu)) igba_gpu_timing(
         .fclk(fclk),
         .mclk(mclk),
         .reset(reset),
@@ -110,9 +115,9 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
         .new_cycles(new_cycles),
         .new_cycles_valid(new_cycles_valid),
         
-        .IRP_HBlank(IRP_HBlank),
-        .IRP_VBlank(IRP_VBlank),
-        .IRP_LCDStat(IRP_LCDStat),
+        .IRP_HBlank(IRP_HBlank_fclk),
+        .IRP_VBlank(IRP_VBlank_fclk),
+        .IRP_LCDStat(IRP_LCDStat_fclk),
         
         .vram_block_mode(vram_block_mode),
         .vram_blocked(vram_blocked),
@@ -133,7 +138,7 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
     );
     
     
-    gba_gpu_drawer #(is_simu) drawer(
+    gba_gpu_drawer #(.is_simu(is_simu)) drawer(
         .fclk(fclk),
         .mclk(mclk),
         
@@ -242,17 +247,62 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
         .pixel_out_we(pixel2_out_we)
     );
     
-    // Convert from fclk to mclk
-    reg hblank_trigger_r, vblank_trigger_r, videodma_start_r, videodma_stop_r;
-    assign hblank_trigger_dma = hblank_trigger | hblank_trigger_r;
-    assign vblank_trigger_dma = vblank_trigger | vblank_trigger_r;
-    assign videodma_start_dma = videodma_start | videodma_start_r;
-    assign videodma_stop_dma = videodma_stop | videodma_stop_r;
+    // Convert fclk pulses to mclk pulses
+    reg hblank_trigger_seen, vblank_trigger_seen, videodma_start_seen, videodma_stop_seen;
+    reg IRP_HBlank_seen, IRP_VBlank_seen, IRP_LCDStat_seen;
+    reg [$clog2(FCLK_SPEED)-1:0] fclk_cycle;
+    reg mclk_r;
     always @(posedge fclk) begin
-        hblank_trigger_r <= hblank_trigger;
-        vblank_trigger_r <= vblank_trigger;
-        videodma_start_r <= videodma_start;
-        videodma_stop_r <= videodma_stop;
+        if (reset) begin
+            fclk_cycle <= 0;
+            hblank_trigger_seen <= 0;
+            vblank_trigger_seen <= 0;
+            videodma_start_seen <= 0;
+            videodma_stop_seen <= 0;
+            IRP_HBlank_seen <= 0;
+            IRP_VBlank_seen <= 0;
+            IRP_LCDStat_seen <= 0;
+        end else begin
+            fclk_cycle <= fclk_cycle + 1;
+            mclk_r <= mclk;
+            if (mclk & !mclk_r) fclk_cycle <= 1;            // sync cycle counter
+
+            hblank_trigger_dma <= 0;                        // default values
+            vblank_trigger_dma <= 0;
+            videodma_start_dma <= 0;
+            videodma_stop_dma <= 0;
+            IRP_HBlank <= 0;
+            IRP_VBlank <= 0;
+            IRP_LCDStat <= 0;
+
+            if (hblank_trigger) hblank_trigger_seen <= 1;   // capture fclk pulses
+            if (vblank_trigger) vblank_trigger_seen <= 1;
+            if (videodma_start) videodma_start_seen <= 1;
+            if (videodma_stop) videodma_stop_seen <= 1;
+            if (IRP_HBlank_fclk) IRP_HBlank_seen <= 1;
+            if (IRP_VBlank_fclk) IRP_VBlank_seen <= 1;
+            if (IRP_LCDStat_fclk) IRP_LCDStat_seen <= 1;
+
+            if (fclk_cycle == FCLK_SPEED-1) begin
+                fclk_cycle <= 0;                            // reset cycle counter
+            
+                hblank_trigger_dma <= hblank_trigger_seen;  // generate mclk pulses
+                vblank_trigger_dma <= vblank_trigger_seen;
+                videodma_start_dma <= videodma_start_seen;
+                videodma_stop_dma <= videodma_stop_seen;
+                IRP_HBlank <= IRP_HBlank_seen;
+                IRP_VBlank <= IRP_VBlank_seen;
+                IRP_LCDStat <= IRP_LCDStat_seen;
+
+                hblank_trigger_seen <= 0;                   // reset fclk pulse flags
+                vblank_trigger_seen <= 0;
+                videodma_start_seen <= 0;
+                videodma_stop_seen <= 0;
+                IRP_HBlank_seen <= 0;
+                IRP_VBlank_seen <= 0;
+                IRP_LCDStat_seen <= 0;
+            end
+        end
     end
 
 endmodule

@@ -12,7 +12,7 @@
 #include "Vgbatang_top_gbatang_top.h"
 #include "Vgbatang_top_gba_gpu.h"
 #include "Vgbatang_top_gba_cpu.h"
-#include "Vgbatang_top_gba_gpu_drawer__D0.h"
+#include "Vgbatang_top_gba_gpu_drawer.h"
 #include "Vgbatang_top_dpram32_block.h"
 #include "Vgbatang_top_sim_dpram_be__D4000.h"
 #include "Vgbatang_top_sim_dpram_be__D2000.h"
@@ -71,6 +71,7 @@ VerilatedFstC *m_trace;
 Vgbatang_top *top = new Vgbatang_top;
 Vgbatang_top_gbatang_top *gba = top->gbatang_top;
 uint64_t sim_time;
+uint8_t clkcnt;
 
 // split by spaces
 vector<string> tokenize(string s);
@@ -78,15 +79,15 @@ long long parse_num(string s);
 void trace_on();
 void trace_off();
 
-static bool posedge, posedge33;
-static int clk16_last, clk33_last;
+static bool posedge;
+static int clk16_last;
 
 static void loading_step()
 {
 	Vgbatang_top_gbatang_top *gba = top->gbatang_top;
-	top->clk33 ^= 1; // actually 33mhz
-	if (top->clk33)	 // 16mhz clock at half speed
-		top->clk16 ^= 1;
+	clkcnt++;
+	top->clk67 = clkcnt & 1;
+	top->clk16 = (clkcnt >> 2) & 1;
 	top->eval();
 	if (trace_toggle && trace_loading) {
 		m_trace->dump(sim_time);
@@ -94,8 +95,6 @@ static void loading_step()
 	sim_time++; // advance simulation time
 	posedge = (top->clk16 == 1 && clk16_last == 0);
 	clk16_last = top->clk16;
-	posedge33 = (top->clk33 == 1 && clk33_last == 0);
-	clk33_last = top->clk33;
 }
 
 const int BACKUP_NONE = 0;
@@ -398,10 +397,9 @@ int main(int argc, char **argv, char **env)
 			// if (sim_time == 3 * 1000 * 1000)
 			// 	// top->joy_btns = 1 << 11;	// right shoulder button is on
 			// 	top->joy_btns = 1 << 10; // left shoulder button is on
-
-			top->clk33 ^= 1; // actually 33mhz
-			if (top->clk33)	 // 16mhz clock at half speed
-				top->clk16 ^= 1;
+			clkcnt++;
+			top->clk67 = clkcnt & 1;
+			top->clk16 = (clkcnt >> 2) & 1;
 			top->eval();
 			posedge = (top->clk16 == 1 && clk16_last == 0);
 			clk16_last = top->clk16;

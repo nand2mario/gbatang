@@ -1,5 +1,5 @@
 module gba_joypad (
-    input fclk,
+    // input fclk,
     input mclk,
     input [31:0] gb_bus_din,
     inout [31:0] gb_bus_dout,
@@ -65,7 +65,8 @@ always @(posedge mclk) begin
     end
 end
 
-always @(posedge fclk) begin
+// always @(posedge fclk) begin
+always @(posedge mclk) begin
     IRP_Joypad <= 0;
     
     Keys_1 <= Keys;

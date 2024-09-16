@@ -47,7 +47,7 @@ module gbatang_top (
     output UART_TXD,    
 `else           // Ports for Verilator
     input clk16,
-    input clk33,
+    input clk67,
     input [11:0] joy_btns,
     output gba_on,
 
@@ -201,8 +201,8 @@ wire [3:0] palette_oam_we;
 
 wire phase = ~clk16;    // 0: internal GPU work, 1: get data from CPU
 
-gba_gpu gpu (
-    .fclk(clk33), .mclk(clk16), .phase(phase), .reset(~gbaon),
+gba_gpu #(.FCLK_SPEED(4)) gpu (
+    .fclk(clk67), .mclk(clk16), .phase(phase), .reset(~gbaon),
     `GB_BUS_PORTS_INST,
 
     // config
@@ -416,7 +416,7 @@ controller_ds2 ds2 (
 );
 `endif
 gba_joypad joypad (
-    .mclk(clk16), .fclk(clk33), `GB_BUS_PORTS_INST, .IRP_Joypad(IRP_Joypad),
+    .mclk(clk16), /*.fclk(clk33),*/ `GB_BUS_PORTS_INST, .IRP_Joypad(IRP_Joypad),
     .KeyA(joy_btns[8]), .KeyB(joy_btns[0]), .KeySelect(joy_btns[2]), .KeyStart(joy_btns[3]), 
     .KeyRight(joy_btns[7]), .KeyLeft(joy_btns[6]), .KeyUp(joy_btns[4]), .KeyDown(joy_btns[5]), 
     .KeyR(joy_btns[11]), .KeyL(joy_btns[10]),
@@ -436,7 +436,7 @@ wire [10:0] overlay_x;
 wire [9:0] overlay_y;
 
 gba2hdmi video (
-	.clk(clk33), .resetn(resetn),
+	.clk(clk67), .resetn(resetn),
 	.clk_pixel(hclk), .clk_5x_pixel(hclk5),
     .pixel_data(pixel_out_data), .pixel_x(pixel_out_x), .pixel_y(pixel_out_y),
     .pixel_we(pixel_out_we),

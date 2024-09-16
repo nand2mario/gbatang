@@ -90,20 +90,14 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
                              REG_DISPSTAT_H_Blank_IRQ_Enable, REG_DISPSTAT_V_Blank_IRQ_Enable, REG_DISPSTAT_V_Counter_flag, 
                              REG_DISPSTAT_H_Blank_flag, REG_DISPSTAT_V_Blank_flag};
     
-    reg IRP_HBlank_fclk, IRP_VBlank_fclk, IRP_LCDStat_fclk;
-    reg IRP_HBlank_fclk_r, IRP_VBlank_fclk_r, IRP_LCDStat_fclk_r;
-
     always @(posedge fclk)
          begin
             reg [11:0] cycles;
             cycles = cycles_reg;
 
-            IRP_HBlank_fclk <= 1'b0;
-            IRP_VBlank_fclk <= 1'b0;
-            IRP_LCDStat_fclk <= 1'b0;
-            IRP_HBlank_fclk_r <= IRP_HBlank_fclk;
-            IRP_VBlank_fclk_r <= IRP_VBlank_fclk;
-            IRP_LCDStat_fclk_r <= IRP_LCDStat_fclk;
+            IRP_HBlank <= 1'b0;
+            IRP_VBlank <= 1'b0;
+            IRP_LCDStat <= 1'b0;
             
             drawline <= 1'b0;
             refpoint_update <= 1'b0;
@@ -162,7 +156,7 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
                                 if (linecounter >= 2)
                                     videodma_start <= 1'b1;
                                 if (REG_DISPSTAT_H_Blank_IRQ_Enable)
-                                    IRP_HBlank_fclk <= 1'b1;
+                                    IRP_HBlank <= 1'b1;
                             end 
                         end
                     
@@ -172,7 +166,7 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
                             linecounter <= linecounter + 1;
                             if ((linecounter + 1) == REG_DISPSTAT_V_Count_Setting) begin
                                 if (REG_DISPSTAT_V_Counter_IRQ_Enable)
-                                    IRP_LCDStat_fclk <= 1'b1;
+                                    IRP_LCDStat <= 1'b1;
                                 REG_DISPSTAT_V_Counter_flag <= 1'b1;
                             end else
                                 REG_DISPSTAT_V_Counter_flag <= 1'b0;
@@ -189,7 +183,7 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
                                 REG_DISPSTAT_V_Blank_flag <= 1'b1;
                                 vblank_trigger <= 1'b1;
                                 if (REG_DISPSTAT_V_Blank_IRQ_Enable)
-                                    IRP_VBlank_fclk <= 1'b1;
+                                    IRP_VBlank <= 1'b1;
                             end
                         end 
                     
@@ -201,7 +195,7 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
                             newline_invsync <= 1'b1;
                             // don't do hblank for dma here!
                             if (REG_DISPSTAT_H_Blank_IRQ_Enable)
-                                IRP_HBlank_fclk <= 1'b1;		// Note that no H-Blank interrupts are generated within V-Blank period. Really? Seems to work this way...
+                                IRP_HBlank <= 1'b1;		// Note that no H-Blank interrupts are generated within V-Blank period. Really? Seems to work this way...
                             if (linecounter < 162)
                                 videodma_start <= 1'b1;
                             if (linecounter == 162)
@@ -214,7 +208,7 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
                             linecounter <= linecounter + 1;
                             if ((linecounter + 1) == REG_DISPSTAT_V_Count_Setting | ((linecounter + 1) == 228 & REG_DISPSTAT_V_Count_Setting == 8'h00)) begin
                                 if (REG_DISPSTAT_V_Counter_IRQ_Enable)
-                                    IRP_LCDStat_fclk <= 1'b1;
+                                    IRP_LCDStat <= 1'b1;
                                 REG_DISPSTAT_V_Counter_flag <= 1'b1;
                             end else
                                 REG_DISPSTAT_V_Counter_flag <= 1'b0;
@@ -238,13 +232,6 @@ module gba_gpu_timing(fclk, mclk, reset, lockspeed, gb_bus_din, gb_bus_dout, gb_
             cycles_reg <= cycles;
         end 
 
-    // cross clock domain 
-    always @(posedge mclk) begin
-        IRP_HBlank <= IRP_HBlank_fclk_r | IRP_HBlank_fclk;
-        IRP_VBlank <= IRP_VBlank_fclk_r | IRP_VBlank_fclk;
-        IRP_LCDStat <= IRP_LCDStat_fclk_r | IRP_LCDStat_fclk;
-    end
-    
 endmodule
 `undef pproc_bus_gba
 `undef preg_gba_display
