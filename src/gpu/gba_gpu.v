@@ -5,7 +5,7 @@ module gba_gpu(fclk, mclk, phase, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb
         IRP_HBlank, IRP_VBlank, IRP_LCDStat, hblank_trigger_dma, vblank_trigger_dma, 
         videodma_start_dma, videodma_stop_dma, VRAM_Lo_addr, VRAM_Lo_datain, VRAM_Lo_dataout, VRAM_Lo_we, VRAM_Lo_be, VRAM_Hi_addr, VRAM_Hi_datain, VRAM_Hi_dataout, VRAM_Hi_we, VRAM_Hi_be, vram_blocked, OAMRAM_PROC_addr, OAMRAM_PROC_datain, OAMRAM_PROC_dataout, OAMRAM_PROC_we, PALETTE_BG_addr, PALETTE_BG_datain, PALETTE_BG_dataout, PALETTE_BG_we, PALETTE_OAM_addr, PALETTE_OAM_datain, PALETTE_OAM_dataout, PALETTE_OAM_we, DISPSTAT_debug);
     `include "pproc_bus_gba.sv"
-    parameter                 FCLK_SPEED = 4;
+    parameter                 FCLK_SPEED = 3;
     parameter                 is_simu = 0;
     input                     fclk;     // fast clock for everything GPU
     input                     mclk;     // 16Mhz main GBA clock

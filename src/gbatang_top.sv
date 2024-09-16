@@ -7,7 +7,7 @@
 module gbatang_top (
 
 `ifndef VERILATOR
-    input clk50,
+    input sysclk,                   // 50Mhz
 
     // MicroSD
     output sd_clk,
@@ -75,7 +75,7 @@ wire clk27;         // intermediate 27Mhz clock for HDMI
 // wire clk105;
 // OSC #(.FREQ_DIV(2)) osc (.OSCOUT(clk105));
 // pll_27 pll27(.clkin(clk105), .clkout0(clk27));
-pll_27 pll27(.clkin(clk50), .clkout0(clk27));
+pll_27 pll27(.clkin(sysclk), .clkout0(clk27));
 
 wire clk16;         // main clock: 16.7Mhz GBA CPU clock
 wire clk50;         // ppu clock:  3 x 16.7Mhz

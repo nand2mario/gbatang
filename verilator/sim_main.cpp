@@ -10,7 +10,7 @@
 #include "Vgbatang_top.h"
 #include "Vgbatang_top___024root.h"
 #include "Vgbatang_top_gbatang_top.h"
-#include "Vgbatang_top_gba_gpu__F3.h"
+#include "Vgbatang_top_gba_gpu.h"
 #include "Vgbatang_top_gba_cpu.h"
 #include "Vgbatang_top_gba_gpu_drawer.h"
 #include "Vgbatang_top_dpram32_block.h"
