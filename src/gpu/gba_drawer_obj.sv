@@ -361,9 +361,11 @@ module gba_drawer_obj (fclk, hblank, lockspeed, busy, drawline, ypos, ypos_mosai
         case (PIXELGen)
             
             WAITOAM : begin
+                reg [6:0] sizeX_var, sizeY_var;
                 rescounter <= 0;
                 if (OAMFetch == DONE) begin
-                    PIXELGen <= CALCMOSAIC;
+                    PIXELGen <= BASEADDR_PRE;
+                    // PIXELGen <= CALCMOSAIC;
                     Pixel_data0 <= OAM_data0;
                     Pixel_data1 <= OAM_data1;
                     Pixel_data2 <= OAM_data2;
@@ -382,33 +384,34 @@ module gba_drawer_obj (fclk, hblank, lockspeed, busy, drawline, ypos, ypos_mosai
                     case (OAM_data0[OAM_OBJSHAPE_HI:OAM_OBJSHAPE_LO])
                         0 :		// square
                             case (OAM_data1[OAM_OBJSIZE_HI:OAM_OBJSIZE_LO])
-                            0 : begin sizeX <= 8;  sizeY <= 8;  end
-                            1 : begin sizeX <= 16; sizeY <= 16; end
-                            2 : begin sizeX <= 32; sizeY <= 32; end
-                            3 : begin sizeX <= 64; sizeY <= 64; end
+                            0 : begin sizeX_var = 8;  sizeY_var = 8;  end
+                            1 : begin sizeX_var = 16; sizeY_var = 16; end
+                            2 : begin sizeX_var = 32; sizeY_var = 32; end
+                            3 : begin sizeX_var = 64; sizeY_var = 64; end
                             default : ;
                             endcase
                         
                         1 :		// hor
                             case (((OAM_data1[OAM_OBJSIZE_HI:OAM_OBJSIZE_LO])))
-                            0 : begin sizeX <= 16; sizeY <= 8;  end
-                            1 : begin sizeX <= 32; sizeY <= 8;  end
-                            2 : begin sizeX <= 32; sizeY <= 16; end
-                            3 : begin sizeX <= 64; sizeY <= 32; end
+                            0 : begin sizeX_var = 16; sizeY_var = 8;  end
+                            1 : begin sizeX_var = 32; sizeY_var = 8;  end
+                            2 : begin sizeX_var = 32; sizeY_var = 16; end
+                            3 : begin sizeX_var = 64; sizeY_var = 32; end
                             default : ;
                             endcase
                         
                         2 :		// vert
                             case (((OAM_data1[OAM_OBJSIZE_HI:OAM_OBJSIZE_LO])))
-                            0 : begin sizeX <= 8;  sizeY <= 16; end
-                            1 : begin sizeX <= 8;  sizeY <= 32; end
-                            2 : begin sizeX <= 16; sizeY <= 32; end
-                            3 : begin sizeX <= 32; sizeY <= 64; end
+                            0 : begin sizeX_var = 8;  sizeY_var = 16; end
+                            1 : begin sizeX_var = 8;  sizeY_var = 32; end
+                            2 : begin sizeX_var = 16; sizeY_var = 32; end
+                            3 : begin sizeX_var = 32; sizeY_var = 64; end
                             default : ;
                             endcase
                         
                         default : ;
                     endcase
+                    sizeX <= sizeX_var; sizeY <= sizeY_var;
                     
                     if (OAM_data0[OAM_HICOLOR] == 1'b0) begin
                         //tilemult      <= 32;
@@ -423,32 +426,54 @@ module gba_drawer_obj (fclk, hblank, lockspeed, busy, drawline, ypos, ypos_mosai
                         x_div <= 1;
                         x_size <= 8;
                     end
+
+                    // CALCMOSAIC
+                    if (OAM_data0[OAM_AFFINE] & OAM_data0[OAM_DBLSIZE]) begin
+                        fieldX = 2 * sizeX_var;
+                        fieldY = 2 * sizeY_var;
+                    end else begin
+                        fieldX = sizeX_var;
+                        fieldY = sizeY_var;
+                    end
+                    
+                    posy = OAM_data0[OAM_Y_HI:OAM_Y_LO];
+                    if (posy > (12'h100 - fieldY))
+                        posy = posy - 12'h100;
+                    if (OAM_data0[OAM_MOSAIC])
+                        ty <= ypos_mosaic - posy;
+                    else
+                        ty <= ypos - posy;
+                    
+                    if (OAM_data0[OAM_HICOLOR] == 1'b0)
+                        sizemult <= sizeX_var * 4;
+                    else
+                        sizemult <= sizeX_var * 8;                    
                 end 
             end
             
-            CALCMOSAIC : begin
-                PIXELGen <= BASEADDR_PRE;
-                if (Pixel_data0[OAM_AFFINE] & Pixel_data0[OAM_DBLSIZE]) begin
-                    fieldX = 2 * sizeX;
-                    fieldY = 2 * sizeY;
-                end else begin
-                    fieldX = sizeX;
-                    fieldY = sizeY;
-                end
+            // CALCMOSAIC : begin
+            //     PIXELGen <= BASEADDR_PRE;
+            //     if (Pixel_data0[OAM_AFFINE] & Pixel_data0[OAM_DBLSIZE]) begin
+            //         fieldX = 2 * sizeX;
+            //         fieldY = 2 * sizeY;
+            //     end else begin
+            //         fieldX = sizeX;
+            //         fieldY = sizeY;
+            //     end
                 
-                posy = Pixel_data0[OAM_Y_HI:OAM_Y_LO];
-                if (posy > (12'h100 - fieldY))
-                    posy = posy - 12'h100;
-                if (Pixel_data0[OAM_MOSAIC])
-                    ty <= ypos_mosaic - posy;
-                else
-                    ty <= ypos - posy;
+            //     posy = Pixel_data0[OAM_Y_HI:OAM_Y_LO];
+            //     if (posy > (12'h100 - fieldY))
+            //         posy = posy - 12'h100;
+            //     if (Pixel_data0[OAM_MOSAIC])
+            //         ty <= ypos_mosaic - posy;
+            //     else
+            //         ty <= ypos - posy;
                 
-                if (Pixel_data0[OAM_HICOLOR] == 1'b0)
-                    sizemult <= sizeX * 4;
-                else
-                    sizemult <= sizeX * 8;
-            end
+            //     if (Pixel_data0[OAM_HICOLOR] == 1'b0)
+            //         sizemult <= sizeX * 4;
+            //     else
+            //         sizemult <= sizeX * 8;
+            // end
             
             BASEADDR_PRE : begin
                 if (ty < 0 | ty >= fieldY)		// not in current line -> skip
