@@ -101,7 +101,7 @@ localparam START = 3'd1;
 localparam READING = 3'd2;
 localparam READ_READY = 3'd3;
 localparam WRITING = 3'd4;
-reg [2:0] state;
+reg [2:0] state, last_state;
 
 generate
 if (has_DRQ) begin
@@ -154,7 +154,24 @@ assign is_idle = state == IDLE;
 assign dma_on = CNT_H_DMA_Enable_written & ~CNT_H_DMA_Enable_written_r | dmaon;     // 1: pause cpu because of DMA.
 assign dma_eepromcount = fullcount;
 
-assign dma_bus_ena = running && (state == READING || state == WRITING);
+// assign dma_bus_ena = running && (state == READING || state == WRITING);
+
+reg [31:0] dma_bus_dout_buf;
+reg [2:0] dmaout;
+localparam DMAOUT_DIN = 3'd0;
+localparam DMAOUT_DIN_HI16 = 3'd1;
+localparam DMAOUT_DIN_LO16 = 3'd2;
+localparam DMAOUT_BUF = 3'd3;
+
+always @* begin
+    case (dmaout)
+    DMAOUT_DIN:         dma_bus_dout = dma_bus_din;
+    DMAOUT_DIN_HI16:    dma_bus_dout = {dma_bus_din[31:16], dma_bus_din[31:16]};
+    DMAOUT_DIN_LO16:    dma_bus_dout = {dma_bus_din[15:0], dma_bus_din[15:0]};
+    DMAOUT_BUF:         dma_bus_dout = dma_bus_dout_buf;
+    default:            dma_bus_dout = 32'hDEADDEAD;
+    endcase
+end
 
 always @(posedge clk100) begin
     if (reset) begin
@@ -284,6 +301,9 @@ always @(posedge clk100) begin
             end
                 
             // DMA work
+            // clk    /‾‾‾\___/‾‾‾\___/‾‾‾\___/‾‾‾\___/‾‾‾\___/‾‾‾\___/
+            // state  | IDLE  | START | READ  | START | READ  | START | IDLE
+            // dma_bus_done           |   1   |   1   |   1   |   1   |
             if (running) begin
                 case (state)
                 IDLE :
@@ -291,13 +311,68 @@ always @(posedge clk100) begin
                         if (lowprio_pending == 0) 
                             dma_init_cycles  <= 1;
                         state <= START;
+                        last_state <= IDLE;
                     end
                 
-                START :
-                    if (allow_on && !dma_init_cycles) begin
+                START : begin
+                    reg next_read;
+                    next_read = last_state == IDLE;
+
+                    if (last_state == READING) begin            // wait for writing finish to start next datum
+                        dma_bus_dout_buf <= dma_bus_dout;
+                        dmaout <= DMAOUT_BUF;
+                        if (dmaout == DMAOUT_DIN || dmaout == DMAOUT_DIN_HI16 || dmaout == DMAOUT_DIN_LO16) begin
+                            last_dma_valid <= 1;
+                            last_dma_out   <= dma_bus_dout;
+                        end
+
+                        if (dma_bus_done) begin
+                            dma_bus_ena <= 0;
+                            if (count == 0) begin
+                                state   <= IDLE;
+                                last_state <= START;
+                                running <= 0;
+                                dmaon   <= 0;
+
+                                irp_dma <= iRQ_on;
+
+                                if (Repeat && start_timing != 0) begin
+                                    waiting <= 1;
+                                    if (start_timing == 3 && (index == 1 || index == 2))    // sound dma
+                                        count <= 4;
+                                    else begin
+                                    
+                                        if (index == 3) begin
+                                            if (CNT_L[15:0] == 0) 
+                                                count <= {1'b1, 16'h0000};
+                                            else
+                                                count <= {1'b0, CNT_L[15:0]};
+                                        end else begin
+                                            if (CNT_L[13:0] == 0) 
+                                                count <= {1'b0, 16'h4000};
+                                            else
+                                                count <= {3'b000, CNT_L[13:0]};
+                                        end
+                                        
+                                        if (dest_addr_control == 3) begin
+                                            addr_target <= DAD[27:0];
+                                            if (index < 3) begin
+                                                addr_target[27] <= 0;
+                                            end
+                                        end
+                                    end
+                                end else
+                                    enable <= 0;
+                            end else
+                                next_read = 1;         // continue to read next datum
+                        end
+                    end
+
+                    // issue next read request
+                    if (next_read && allow_on && !dma_init_cycles) begin
                         state <= READING;
-                        dma_bus_rnw <= 1;
-                        // dma_bus_ena <= 1;
+                        dma_bus_rnw <= 1;       // read
+                        dma_bus_ena <= 1;
                         if (Transfer_Type_DW) begin
                             dma_bus_adr <= {addr_source[27:2], 2'b0};
                             dma_bus_acc <= ACCESS_32BIT;
@@ -316,40 +391,44 @@ always @(posedge clk100) begin
                             dma_torom <= 1;
                         end
                     end
+
+                end
                     
                 READING :
                     if (dma_bus_done) begin         // data is available next cycle
-                        // dma_bus_ena <= 0;
-                        state <= READ_READY;
-                    end
-                
-                READ_READY: begin
-                        state <= WRITING;
+                        state <= START;
+                        last_state <= READING;
+
+                        // issue write request
                         dma_bus_rnw  <= 0;
-                        // dma_bus_ena  <= 1;
+                        dma_bus_ena  <= 1;
                         if (Transfer_Type_DW) 
                             dma_bus_adr <= {addr_target[27:2], 2'b00};
                         else
                             dma_bus_adr <= {addr_target[27:1], 1'b0};
                         
-                        if (addr_source >= 'h2000000 && !dma_bus_unread) begin
-                            last_dma_valid <= 1;
+                        if (addr_source >= 'h200_0000 && !dma_bus_unread) begin
                             if (Transfer_Type_DW) begin
-                                dma_bus_dout   <= dma_bus_din;
-                                last_dma_out   <= dma_bus_din;
+                                dmaout <= DMAOUT_DIN;
+                                // dma_bus_dout   <= dma_bus_din;
+                                // last_dma_out   <= dma_bus_din;
                             end else begin
-                                dma_bus_dout   <= addr_source[1] ? 
-                                    {dma_bus_din[31:16], dma_bus_din[31:16]} :
-                                    {dma_bus_din[15:0], dma_bus_din[15:0]};
-                                last_dma_out   <= addr_source[1] ? 
-                                    {dma_bus_din[31:16], dma_bus_din[31:16]} :
-                                    {dma_bus_din[15:0], dma_bus_din[15:0]};
+                                dmaout <= addr_source[1] ? DMAOUT_DIN_HI16 : DMAOUT_DIN_LO16;
+                                // dma_bus_dout   <= addr_source[1] ? 
+                                //     {dma_bus_din[31:16], dma_bus_din[31:16]} :
+                                //     {dma_bus_din[15:0], dma_bus_din[15:0]};
+                                // last_dma_out   <= addr_source[1] ? 
+                                //     {dma_bus_din[31:16], dma_bus_din[31:16]} :
+                                //     {dma_bus_din[15:0], dma_bus_din[15:0]};
                             end
                         end else begin
+                            dmaout <= DMAOUT_BUF;
                             if (Transfer_Type_DW)
-                                dma_bus_dout <= last_dma_in;
+                                dma_bus_dout_buf <= last_dma_in;
+                                // dma_bus_dout <= last_dma_in;
                             else
-                                dma_bus_dout <= {last_dma_in[15:0], last_dma_in[15:0]};
+                                dma_bus_dout_buf <= {last_dma_in[15:0], last_dma_in[15:0]};
+                                // dma_bus_dout <= {last_dma_in[15:0], last_dma_in[15:0]};
                         end
                         
                         // next settings
@@ -378,49 +457,9 @@ always @(posedge clk100) begin
                         dma_new_cycles   <= 1;
                         dma_first_cycles <= first;
                         dma_dword_cycles <= Transfer_Type_DW;
-                        dma_cycles_adrup <= addr_target[27:24];
+                        dma_cycles_adrup <= addr_target[27:24];                        
                     end
-                                        
-                WRITING :
-                    if (dma_bus_done) begin
-                        state <= START;
-                        // dma_bus_ena <= 0;
-                        if (count == 0) begin
-                            state   <= IDLE;
-                            running <= 0;
-                            dmaon   <= 0;
-
-                            irp_dma <= iRQ_on;
-
-                            if (Repeat && start_timing != 0) begin
-                                waiting <= 1;
-                                if (start_timing == 3 && (index == 1 || index == 2))
-                                    count <= 4;
-                                else begin
-                                
-                                    if (index == 3) begin
-                                        if (CNT_L[15:0] == 0) 
-                                            count <= {1'b1, 16'h0000};
-                                        else
-                                            count <= {1'b0, CNT_L[15:0]};
-                                    end else begin
-                                        if (CNT_L[13:0] == 0) 
-                                            count <= {1'b0, 16'h4000};
-                                        else
-                                            count <= {3'b000, CNT_L[13:0]};
-                                    end
-                                    
-                                    if (dest_addr_control == 3) begin
-                                        addr_target <= DAD[27:0];
-                                        if (index < 3) begin
-                                            addr_target[27] <= 0;
-                                        end
-                                    end
-                                end
-                            end else
-                                enable <= 0;
-                        end
-                    end
+                                       
                 default: ;
                 endcase
             end
