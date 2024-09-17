@@ -124,23 +124,6 @@ module gba_drawer_obj (fclk, hblank, lockspeed, busy, drawline, ypos, ypos_mosai
     reg signed [15:0]   pixeladdr;          // tile address of current pixel
     
     reg [9:0]           sizemult;
-    reg signed [23:0]   pixeladdr_pre_a0 /* synthesis syn_keep=1 */;        // work-around for weird Gowin synthesis bug
-    reg signed [23:0]   pixeladdr_pre_a1 /* synthesis syn_keep=1 */;        // if not syn_keep, sprites are drawn at wrong offsets
-    reg signed [23:0]   pixeladdr_pre_a2;
-    reg signed [23:0]   pixeladdr_pre_a3;
-    reg signed [23:0]   pixeladdr_pre_a4 /* synthesis syn_keep=1 */;
-    reg signed [23:0]   pixeladdr_pre_a5 /* synthesis syn_keep=1 */;
-    reg signed [23:0]   pixeladdr_pre_a6;
-    reg signed [23:0]   pixeladdr_pre_a7;
-    
-    reg signed [15:0]   pixeladdr_pre_0;
-    reg signed [15:0]   pixeladdr_pre_1;
-    reg signed [15:0]   pixeladdr_pre_2;
-    reg signed [15:0]   pixeladdr_pre_3;
-    reg signed [15:0]   pixeladdr_pre_4;
-    reg signed [15:0]   pixeladdr_pre_5;
-    reg signed [15:0]   pixeladdr_pre_6;
-    reg signed [15:0]   pixeladdr_pre_7;
     
     reg [2:0]           x_flip_offset;
     reg [5:0]           y_flip_offset;
@@ -364,7 +347,7 @@ module gba_drawer_obj (fclk, hblank, lockspeed, busy, drawline, ypos, ypos_mosai
                 reg [6:0] sizeX_var, sizeY_var;
                 rescounter <= 0;
                 if (OAMFetch == DONE) begin
-                    PIXELGen <= BASEADDR_PRE;
+                    PIXELGen <= BASEADDR;
                     // PIXELGen <= CALCMOSAIC;
                     Pixel_data0 <= OAM_data0;
                     Pixel_data1 <= OAM_data1;
@@ -475,46 +458,97 @@ module gba_drawer_obj (fclk, hblank, lockspeed, busy, drawline, ypos, ypos_mosai
             //         sizemult <= sizeX * 8;
             // end
             
-            BASEADDR_PRE : begin
+            // BASEADDR_PRE : begin
+            //     if (ty < 0 | ty >= fieldY)		// not in current line -> skip
+            //         PIXELGen <= WAITOAM;
+            //     else begin
+            //         PIXELGen <= BASEADDR;
+            //         x <= 0;
+            //     end
+                
+            //     if (posx > 12'h100)
+            //         posx <= posx - 12'h200;
+                
+            //     //mosaik_h_cnt <= 0;
+                
+            //     // affine
+            //     pixeladdr_pre_a0 <= sizeX * 128;        
+            //     pixeladdr_pre_a1 <= signed'({1'b0, fieldX >> 1}) * dx; 
+            //     pixeladdr_pre_a2 <= signed'({1'b0, fieldY >> 1}) * dmx;
+            //     pixeladdr_pre_a3 <= ty * dmx;       
+            //     pixeladdr_pre_a4 <= sizeY * 128;        
+            //     pixeladdr_pre_a5 <= signed'({1'b0, fieldX >> 1}) * dy;
+            //     pixeladdr_pre_a6 <= signed'({1'b0, fieldY >> 1}) * dmy;
+            //     pixeladdr_pre_a7 <= ty * dmy;
+                
+            //     // non affine
+            //     pixeladdr_pre_0 <= y_flip_offset - ty % 8 * x_size;
+            //     pixeladdr_pre_1 <= (sizeY/8 - 1 - ty/8) * sizemult;
+                
+            //     pixeladdr_pre_2 <= y_flip_offset - ty % 8 * x_size;
+            //     pixeladdr_pre_3 <= (sizeY/8 - 1 - ty/8) * 1024;
+                
+            //     pixeladdr_pre_4 <= ty % 8 * x_size;
+            //     pixeladdr_pre_5 <= ty / 8 * sizemult;
+                
+            //     pixeladdr_pre_6 <= ty % 8 * x_size;
+            //     pixeladdr_pre_7 <= ty / 8 * 1024;
+            // end
+            
+            BASEADDR : begin
+                reg signed [23:0]   pixeladdr_pre_a0;        // work-around for weird Gowin synthesis bug
+                reg signed [23:0]   pixeladdr_pre_a1;        // if not syn_keep, sprites are drawn at wrong offsets
+                reg signed [23:0]   pixeladdr_pre_a2;
+                reg signed [23:0]   pixeladdr_pre_a3;
+                reg signed [23:0]   pixeladdr_pre_a4;
+                reg signed [23:0]   pixeladdr_pre_a5;
+                reg signed [23:0]   pixeladdr_pre_a6;
+                reg signed [23:0]   pixeladdr_pre_a7;
+                
+                reg signed [15:0]   pixeladdr_pre_0;
+                reg signed [15:0]   pixeladdr_pre_1;
+                reg signed [15:0]   pixeladdr_pre_2;
+                reg signed [15:0]   pixeladdr_pre_3;
+                reg signed [15:0]   pixeladdr_pre_4;
+                reg signed [15:0]   pixeladdr_pre_5;
+                reg signed [15:0]   pixeladdr_pre_6;
+                reg signed [15:0]   pixeladdr_pre_7;
+
                 if (ty < 0 | ty >= fieldY)		// not in current line -> skip
                     PIXELGen <= WAITOAM;
                 else begin
-                    PIXELGen <= BASEADDR;
+                    PIXELGen <= NEXTADDR;
                     x <= 0;
                 end
+
+                // PIXELGen <= NEXTADDR;
                 
                 if (posx > 12'h100)
                     posx <= posx - 12'h200;
                 
-                //mosaik_h_cnt <= 0;
-                
                 // affine
-                pixeladdr_pre_a0 <= sizeX * 128;        
-                pixeladdr_pre_a1 <= signed'({1'b0, fieldX >> 1}) * dx; 
-                pixeladdr_pre_a2 <= signed'({1'b0, fieldY >> 1}) * dmx;
-                pixeladdr_pre_a3 <= ty * dmx;       
-                pixeladdr_pre_a4 <= sizeY * 128;        
-                pixeladdr_pre_a5 <= signed'({1'b0, fieldX >> 1}) * dy;
-                pixeladdr_pre_a6 <= signed'({1'b0, fieldY >> 1}) * dmy;
-                pixeladdr_pre_a7 <= ty * dmy;
+                pixeladdr_pre_a0 = sizeX * 128;        
+                pixeladdr_pre_a1 = signed'({1'b0, fieldX >> 1}) * dx; 
+                pixeladdr_pre_a2 = signed'({1'b0, fieldY >> 1}) * dmx;
+                pixeladdr_pre_a3 = ty * dmx;       
+                pixeladdr_pre_a4 = sizeY * 128;        
+                pixeladdr_pre_a5 = signed'({1'b0, fieldX >> 1}) * dy;
+                pixeladdr_pre_a6 = signed'({1'b0, fieldY >> 1}) * dmy;
+                pixeladdr_pre_a7 = ty * dmy;
                 
                 // non affine
-                pixeladdr_pre_0 <= y_flip_offset - ty % 8 * x_size;
-                pixeladdr_pre_1 <= (sizeY/8 - 1 - ty/8) * sizemult;
+                pixeladdr_pre_0 = y_flip_offset - ty % 8 * x_size;
+                pixeladdr_pre_1 = (sizeY/8 - 1 - ty/8) * sizemult;
                 
-                pixeladdr_pre_2 <= y_flip_offset - ty % 8 * x_size;
-                pixeladdr_pre_3 <= (sizeY/8 - 1 - ty/8) * 1024;
+                pixeladdr_pre_2 = y_flip_offset - ty % 8 * x_size;
+                pixeladdr_pre_3 = (sizeY/8 - 1 - ty/8) * 1024;
                 
-                pixeladdr_pre_4 <= ty % 8 * x_size;
-                pixeladdr_pre_5 <= ty / 8 * sizemult;
+                pixeladdr_pre_4 = ty % 8 * x_size;
+                pixeladdr_pre_5 = ty / 8 * sizemult;
                 
-                pixeladdr_pre_6 <= ty % 8 * x_size;
-                pixeladdr_pre_7 <= ty / 8 * 1024;
-            end
-            
-            BASEADDR : begin
-                PIXELGen <= NEXTADDR;
-                
+                pixeladdr_pre_6 = ty % 8 * x_size;
+                pixeladdr_pre_7 = ty / 8 * 1024;
+
                 if (Pixel_data0[OAM_AFFINE]) begin
                     pixeltime <= pixeltime + 10 + fieldX * 2;       // total rendering time for this sprite line
                     pixeltime_current <= pixeltime + 10;
