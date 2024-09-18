@@ -364,7 +364,10 @@ always @(posedge clk) begin
                     sdram_rd <= 1;
                     sdram_wr <= 0;
                     sdram_addr <= tosdram(rom_addr);
-                    sdram_be <= 4'b1111;
+                    if (thumb)
+                        sdram_be <= rom_addr[1] ? 4'b1100 : 4'b0011; 
+                    else
+                        sdram_be <= 4'b1111;
                     sdram_port <= PORT_ROM;
                     state <= REQ1_START;
                 end else if (ram_cen) begin
