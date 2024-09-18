@@ -61,7 +61,7 @@ void usage()
 void help() {
 	printf("ROM loaded. Use these keys in the simulation window for controls:\n");
 	printf("SPC: Start/stop simulation.      ESC: Quit.\n");
-	printf("P: view sprites.                 T: toggle tracing on/off\n");
+	printf("P: view sprites.                 M: view BG0 tilemap      T: toggle tracing on/off\n");
 	printf("Arrow keys: D-pad, A: B button, S: A button, Z: L button, X: R button, Q: Select, W: Start\n");
 	// printf("V: dump VRAM.\n");
 	// printf("I: show additional info like frame count.\n");
@@ -72,6 +72,12 @@ Vgbatang_top *top = new Vgbatang_top;
 Vgbatang_top_gbatang_top *gba = top->gbatang_top;
 uint64_t sim_time;
 uint8_t clkcnt;
+
+Vgbatang_top_sim_dpram_be__D4000 *ivram_lo = gba->gpu->drawer->ivram_lo;
+Vgbatang_top_sim_dpram_be__D2000 *ivram_hi = gba->gpu->drawer->ivram_hi;
+Vgbatang_top_dpram32_block *palette_bg = gba->gpu->drawer->paletteram_bg;
+Vgbatang_top_dpram32_block *palette_oam = gba->gpu->drawer->paletteram_oam;
+Vgbatang_top_dpram32_block *oam = gba->gpu->drawer->oamram;
 
 // split by spaces
 vector<string> tokenize(string s);
@@ -237,9 +243,14 @@ void load_rom(char *filename)
 SDL_Window *sdl_sprites_window = NULL;
 SDL_Renderer *sdl_sprites_renderer = NULL;
 SDL_Texture *sdl_sprites_texture = NULL;
+SDL_Window *sdl_tilemap_window = NULL;
+SDL_Renderer *sdl_tilemap_renderer = NULL;
+SDL_Texture *sdl_tilemap_texture = NULL;
 
 void createSpritesWindow();
 void showSpritesWindow();
+void createTilemapWindow();
+void showTilemapWindow();
 
 // memory logging
 bool memlog_en, flashlog_en;
@@ -377,6 +388,7 @@ int main(int argc, char **argv, char **env)
 	SDL_StopTextInput(); // for SDL_KEYDOWN
 
 	createSpritesWindow();
+	createTilemapWindow();
 
 	// (R L X A RT LT DN UP START SELECT Y B)
 	// top->joy_btns = 1 << 6;	// left button is on
@@ -520,6 +532,7 @@ int main(int argc, char **argv, char **env)
 						break;
 					case SDLK_ESCAPE: 	done = true; break;
 					case SDLK_p:		showSpritesWindow(); break;
+					case SDLK_m:        showTilemapWindow(); break;
 					case SDLK_t:		trace_toggle = !trace_toggle; break;
 					case SDLK_v: {
 						FILE *f = fopen("vram.bin", "wb");
@@ -528,8 +541,6 @@ int main(int argc, char **argv, char **env)
 							cout << "Cannot open vram.bin for writing" << endl;
 							continue;
 						}
-						Vgbatang_top_sim_dpram_be__D4000 *ivram_lo = top->rootp->gbatang_top->gpu->drawer->ivram_lo;
-						Vgbatang_top_sim_dpram_be__D2000 *ivram_hi = top->rootp->gbatang_top->gpu->drawer->ivram_hi;
 						uint8_t *vram = (uint8_t *)malloc(96 * 1024); // 96KB
 						for (int i = 0; i < 64 * 1024; i += 4)
 							((uint32_t *)vram)[i / 4] = ivram_lo->mem[i / 4];
@@ -571,6 +582,8 @@ int main(int argc, char **argv, char **env)
 					if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
 						if (e.window.windowID == SDL_GetWindowID(sdl_sprites_window))
 							SDL_HideWindow(sdl_sprites_window);
+						else if (e.window.windowID == SDL_GetWindowID(sdl_tilemap_window))
+							SDL_HideWindow(sdl_tilemap_window);
 						else if (e.window.windowID == SDL_GetWindowID(sdl_window))
 							done = true;
 					}
@@ -621,12 +634,6 @@ void createSpritesWindow()
 		exit(1);
 	}
 }
-
-Vgbatang_top_sim_dpram_be__D4000 *ivram_lo = gba->gpu->drawer->ivram_lo;
-Vgbatang_top_sim_dpram_be__D2000 *ivram_hi = gba->gpu->drawer->ivram_hi;
-Vgbatang_top_dpram32_block *palette_bg = gba->gpu->drawer->paletteram_bg;
-Vgbatang_top_dpram32_block *palette_oam = gba->gpu->drawer->paletteram_oam;
-Vgbatang_top_dpram32_block *oam = gba->gpu->drawer->oamram;
 
 struct OAM
 {
@@ -777,6 +784,131 @@ void destroySpritesWindow()
 	SDL_DestroyRenderer(sdl_sprites_renderer);
 	SDL_DestroyWindow(sdl_sprites_window);
 }
+
+// rendered tilemap background
+Pixel bg[512][512];
+
+void createTilemapWindow()
+{
+	SDL_DisplayMode DM;
+	SDL_GetCurrentDisplayMode(0, &DM);
+	int ypos = DM.h / 2 - 300;
+	int xpos = DM.w / 2 + 250;
+	sdl_tilemap_window = SDL_CreateWindow("Tilemap Viewer", xpos,
+								ypos, 512, 512, SDL_WINDOW_HIDDEN);
+	sdl_tilemap_renderer = SDL_CreateRenderer(sdl_tilemap_window, -1,
+								SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	sdl_tilemap_texture = SDL_CreateTexture(sdl_tilemap_renderer, SDL_PIXELFORMAT_RGBA8888,
+								SDL_TEXTUREACCESS_TARGET, 512, 512);
+	if (!sdl_tilemap_renderer || !sdl_tilemap_window || !sdl_tilemap_texture)
+	{
+		printf("Tilemap window creation failed: %s\n", SDL_GetError());
+		exit(1);
+	}
+}
+
+// TODO: other BG, rotation/scaling
+void showTilemapWindow() {
+	printf("Showing tilemap windows for BG0\n");
+	
+	int charBase = gba->gpu->drawer->REG_BG0CNT_Character_Base_Block;	// tile data, in 16KB
+	int screenBase = gba->gpu->drawer->REG_BG0CNT_Screen_Base_Block;	// map data, in 2KB 
+	int screenSize = gba->gpu->drawer->REG_BG0CNT_Screen_Size;			// 0=256x256, 1=512x256, 2=256x512, 3=512x512
+	int hicolor = gba->gpu->drawer->REG_BG0CNT_Colors_Palettes;			// 0=16 colors, 1=256 colors
+
+	int sc_count = 1;
+	int w, h;
+	if (screenSize == 1 || screenSize == 2) sc_count = 2;
+	if (screenSize == 3) sc_count = 4;
+
+	string title("Tilemap Viewer - BG0 ");
+	if (screenSize == 0) {
+		title += " 256x256";
+		w = 256; h = 256;
+	}
+	if (screenSize == 1) {
+		title += " 512x256";
+		w = 512; h = 256;
+	}
+	if (screenSize == 2) {
+		title += " 256x512";
+		w = 256; h = 512;
+	}
+	if (screenSize == 3) {
+		title += " 512x512";
+		w = 512; h = 512;
+	}
+
+	SDL_SetWindowTitle(sdl_tilemap_window, title.c_str());
+
+	for (int sc = 0; sc < sc_count; sc++) {
+		int screen = (screenBase + sc) * 2048;
+		int y0 = 0, x0 = 0;
+		if (screenSize == 1) {
+			if (sc == 1) x0 = 256;
+		} else if (screenSize == 2) {
+			if (sc == 1) y0 = 256;
+		} else if (screenSize == 3) {
+			if (sc == 1) x0 = 256;
+			if (sc == 2) y0 = 256;
+			if (sc == 3) x0 = 256, y0 = 256;
+		}
+		for (int sy = 0; sy < 32; sy++)
+			for (int sx = 0; sx < 32; sx++) {
+				int map = screen + (sy * 32 + sx) * 2;
+				uint16_t data = (ivram_lo->mem[map / 4] >> ((map % 4 != 0) * 16)) & 0xffff;
+				int tile = data & 0x3ff;
+				int hflip = data & 0x400;
+				int vflip = data & 0x800;
+				int palette = (data >> 12) & 0xf;
+
+				// draw the tile to bg
+				for (int y = 0; y < 8; y++)
+					for (int x = 0; x < 8; x++) {
+						Pixel *p = &bg[y0 + sy * 8 + y][x0 + sx * 8 + x];
+						uint16_t bgr5;
+						if (hicolor) {
+							// 1 pixel per byte, 4 pixels per word
+							int vram = charBase * 16384 + tile * 64 + y * 8 + x;
+							uint8_t color = (ivram_lo->mem[vram / 4] >> (x % 4 * 8)) & 0xff;
+							bgr5 = (color & 1) ? 
+									(palette_bg->ram[color >> 1] >> 16) :
+									(palette_bg->ram[color >> 1] & 0xffff);
+
+						} else {
+							// 2 pixels per byte, 8 pixels per word
+							int vram = charBase * 16384 + tile * 32 + y * 4 + x / 2;		
+							uint8_t color = (ivram_lo->mem[vram / 4] >> (x * 4)) & 0xf;
+							int pal_addr = color ? palette * 16 + color : 0;		// color 0 is "backdrop" (palette 0 color 0)
+							bgr5 = (pal_addr & 1) ? 
+									(palette_bg->ram[pal_addr >> 1] >> 16) :
+									(palette_bg->ram[pal_addr >> 1] & 0xffff);
+						}
+						p->r = (bgr5 & 0x1f) << 3;
+						p->g = ((bgr5 >> 5) & 0x1f) << 3;
+						p->b = ((bgr5 >> 10) & 0x1f) << 3;
+					}
+			}
+	}
+
+	// update texture
+	SDL_UpdateTexture(sdl_tilemap_texture, NULL, bg, 512 * sizeof(Pixel));
+	SDL_RenderClear(sdl_tilemap_renderer);
+	SDL_SetWindowSize(sdl_tilemap_window, w*2, h*2);
+	SDL_Rect rect = {0, 0, w, h};
+	SDL_RenderCopy(sdl_tilemap_renderer, sdl_tilemap_texture, &rect, NULL);
+	SDL_RenderPresent(sdl_tilemap_renderer);
+	SDL_ShowWindow(sdl_tilemap_window);
+	printf("Done showing tilemap window\n");
+}
+
+void destroyTilemapWindow()
+{
+	SDL_DestroyTexture(sdl_tilemap_texture);
+	SDL_DestroyRenderer(sdl_tilemap_renderer);
+	SDL_DestroyWindow(sdl_tilemap_window);
+}
+
 
 bool is_space(char c)
 {

@@ -83,12 +83,12 @@ module gba_gpu_drawer(fclk, mclk, gb_bus_din, gb_bus_dout, gb_bus_adr, gb_bus_rn
     wire [GREENSWAP.upper:GREENSWAP.lower]                                         REG_GREENSWAP;
     
     wire [BG0CNT_BG_Priority.upper:BG0CNT_BG_Priority.lower]                       REG_BG0CNT_BG_Priority;
-    wire [BG0CNT_Character_Base_Block.upper:BG0CNT_Character_Base_Block.lower]     REG_BG0CNT_Character_Base_Block;
+    wire [BG0CNT_Character_Base_Block.upper:BG0CNT_Character_Base_Block.lower]     REG_BG0CNT_Character_Base_Block  /* verilator public */;
     wire [BG0CNT_UNUSED_4_5.upper:BG0CNT_UNUSED_4_5.lower]                         REG_BG0CNT_UNUSED_4_5;
     wire [BG0CNT_Mosaic.upper:BG0CNT_Mosaic.lower]                                 REG_BG0CNT_Mosaic;
-    wire [BG0CNT_Colors_Palettes.upper:BG0CNT_Colors_Palettes.lower]               REG_BG0CNT_Colors_Palettes;
-    wire [BG0CNT_Screen_Base_Block.upper:BG0CNT_Screen_Base_Block.lower]           REG_BG0CNT_Screen_Base_Block;
-    wire [BG0CNT_Screen_Size.upper:BG0CNT_Screen_Size.lower]                       REG_BG0CNT_Screen_Size;
+    wire [BG0CNT_Colors_Palettes.upper:BG0CNT_Colors_Palettes.lower]               REG_BG0CNT_Colors_Palettes /* verilator public */;
+    wire [BG0CNT_Screen_Base_Block.upper:BG0CNT_Screen_Base_Block.lower]           REG_BG0CNT_Screen_Base_Block  /* verilator public */;
+    wire [BG0CNT_Screen_Size.upper:BG0CNT_Screen_Size.lower]                       REG_BG0CNT_Screen_Size  /* verilator public */;
     
     wire [BG1CNT_BG_Priority.upper:BG1CNT_BG_Priority.lower]                       REG_BG1CNT_BG_Priority;
     wire [BG1CNT_Character_Base_Block.upper:BG1CNT_Character_Base_Block.lower]     REG_BG1CNT_Character_Base_Block;

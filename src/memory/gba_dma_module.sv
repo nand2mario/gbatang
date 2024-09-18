@@ -97,10 +97,10 @@ reg [27:0] addr_source, addr_target;
 reg [16:0] count, fullcount;
 
 localparam IDLE = 3'd0;
-localparam START = 3'd1;
-localparam READING = 3'd2;
-localparam READ_READY = 3'd3;
-localparam WRITING = 3'd4;
+localparam START = 3'd1;            // wait for write finish and start next read
+localparam READING = 3'd2;          // wait for read finish and start next write
+// localparam READ_READY = 3'd3;
+// localparam WRITING = 3'd4;
 reg [2:0] state, last_state;
 
 generate
