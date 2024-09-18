@@ -988,7 +988,8 @@ int loadgba(int rom) {
                             gba_backup_type = GBA_BACKUP_FLASH;
                         detect = 0;
                     } else if (detect == 3) {
-                        if ((w & 0xffff) == 0x565F)                     // '_V'
+                        if ((w & 0xffff) == 0x565F |                    // '_V'
+                             w == 0x565F465F)                           // '_F_V'
                             gba_backup_type = GBA_BACKUP_SRAM;
                         detect = 0;
                     } else

@@ -202,6 +202,8 @@ int detect_backup_type(uint8_t *rom, int size) {
 			return BACKUP_FLASH;
 		if (strncmp(p, "SRAM_V", 6) == 0)
 			return BACKUP_SRAM;
+		if (strncmp(p, "SRAM_F_V", 8) == 0)
+			return BACKUP_SRAM;
 	}
 	return BACKUP_NONE;
 }
