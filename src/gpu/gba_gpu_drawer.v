@@ -91,30 +91,30 @@ module gba_gpu_drawer(fclk, mclk, gb_bus_din, gb_bus_dout, gb_bus_adr, gb_bus_rn
     wire [BG0CNT_Screen_Size.upper:BG0CNT_Screen_Size.lower]                       REG_BG0CNT_Screen_Size  /* verilator public */;
     
     wire [BG1CNT_BG_Priority.upper:BG1CNT_BG_Priority.lower]                       REG_BG1CNT_BG_Priority;
-    wire [BG1CNT_Character_Base_Block.upper:BG1CNT_Character_Base_Block.lower]     REG_BG1CNT_Character_Base_Block;
+    wire [BG1CNT_Character_Base_Block.upper:BG1CNT_Character_Base_Block.lower]     REG_BG1CNT_Character_Base_Block /* verilator public */;
     wire [BG1CNT_UNUSED_4_5.upper:BG1CNT_UNUSED_4_5.lower]                         REG_BG1CNT_UNUSED_4_5;
     wire [BG1CNT_Mosaic.upper:BG1CNT_Mosaic.lower]                                 REG_BG1CNT_Mosaic;
-    wire [BG1CNT_Colors_Palettes.upper:BG1CNT_Colors_Palettes.lower]               REG_BG1CNT_Colors_Palettes;
-    wire [BG1CNT_Screen_Base_Block.upper:BG1CNT_Screen_Base_Block.lower]           REG_BG1CNT_Screen_Base_Block;
-    wire [BG1CNT_Screen_Size.upper:BG1CNT_Screen_Size.lower]                       REG_BG1CNT_Screen_Size;
+    wire [BG1CNT_Colors_Palettes.upper:BG1CNT_Colors_Palettes.lower]               REG_BG1CNT_Colors_Palettes /* verilator public */;
+    wire [BG1CNT_Screen_Base_Block.upper:BG1CNT_Screen_Base_Block.lower]           REG_BG1CNT_Screen_Base_Block /* verilator public */;
+    wire [BG1CNT_Screen_Size.upper:BG1CNT_Screen_Size.lower]                       REG_BG1CNT_Screen_Size /* verilator public */;
     
     wire [BG2CNT_BG_Priority.upper:BG2CNT_BG_Priority.lower]                       REG_BG2CNT_BG_Priority;
-    wire [BG2CNT_Character_Base_Block.upper:BG2CNT_Character_Base_Block.lower]     REG_BG2CNT_Character_Base_Block;
+    wire [BG2CNT_Character_Base_Block.upper:BG2CNT_Character_Base_Block.lower]     REG_BG2CNT_Character_Base_Block /* verilator public */;
     wire [BG2CNT_UNUSED_4_5.upper:BG2CNT_UNUSED_4_5.lower]                         REG_BG2CNT_UNUSED_4_5;
     wire [BG2CNT_Mosaic.upper:BG2CNT_Mosaic.lower]                                 REG_BG2CNT_Mosaic;
-    wire [BG2CNT_Colors_Palettes.upper:BG2CNT_Colors_Palettes.lower]               REG_BG2CNT_Colors_Palettes;
-    wire [BG2CNT_Screen_Base_Block.upper:BG2CNT_Screen_Base_Block.lower]           REG_BG2CNT_Screen_Base_Block;
+    wire [BG2CNT_Colors_Palettes.upper:BG2CNT_Colors_Palettes.lower]               REG_BG2CNT_Colors_Palettes /* verilator public */;
+    wire [BG2CNT_Screen_Base_Block.upper:BG2CNT_Screen_Base_Block.lower]           REG_BG2CNT_Screen_Base_Block /* verilator public */;
     wire [BG2CNT_Display_Area_Overflow.upper:BG2CNT_Display_Area_Overflow.lower]   REG_BG2CNT_Display_Area_Overflow;
-    wire [BG2CNT_Screen_Size.upper:BG2CNT_Screen_Size.lower]                       REG_BG2CNT_Screen_Size;
+    wire [BG2CNT_Screen_Size.upper:BG2CNT_Screen_Size.lower]                       REG_BG2CNT_Screen_Size /* verilator public */;
     
     wire [BG3CNT_BG_Priority.upper:BG3CNT_BG_Priority.lower]                       REG_BG3CNT_BG_Priority;
-    wire [BG3CNT_Character_Base_Block.upper:BG3CNT_Character_Base_Block.lower]     REG_BG3CNT_Character_Base_Block;
+    wire [BG3CNT_Character_Base_Block.upper:BG3CNT_Character_Base_Block.lower]     REG_BG3CNT_Character_Base_Block /* verilator public */;
     wire [BG3CNT_UNUSED_4_5.upper:BG3CNT_UNUSED_4_5.lower]                         REG_BG3CNT_UNUSED_4_5;
     wire [BG3CNT_Mosaic.upper:BG3CNT_Mosaic.lower]                                 REG_BG3CNT_Mosaic;
-    wire [BG3CNT_Colors_Palettes.upper:BG3CNT_Colors_Palettes.lower]               REG_BG3CNT_Colors_Palettes;
-    wire [BG3CNT_Screen_Base_Block.upper:BG3CNT_Screen_Base_Block.lower]           REG_BG3CNT_Screen_Base_Block;
+    wire [BG3CNT_Colors_Palettes.upper:BG3CNT_Colors_Palettes.lower]               REG_BG3CNT_Colors_Palettes /* verilator public */;
+    wire [BG3CNT_Screen_Base_Block.upper:BG3CNT_Screen_Base_Block.lower]           REG_BG3CNT_Screen_Base_Block /* verilator public */;
     wire [BG3CNT_Display_Area_Overflow.upper:BG3CNT_Display_Area_Overflow.lower]   REG_BG3CNT_Display_Area_Overflow;
-    wire [BG3CNT_Screen_Size.upper:BG3CNT_Screen_Size.lower]                       REG_BG3CNT_Screen_Size;
+    wire [BG3CNT_Screen_Size.upper:BG3CNT_Screen_Size.lower]                       REG_BG3CNT_Screen_Size /* verilator public */;
     
     wire [BG0HOFS.upper:BG0HOFS.lower]                                             REG_BG0HOFS;
     wire [BG0VOFS.upper:BG0VOFS.lower]                                             REG_BG0VOFS;

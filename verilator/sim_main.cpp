@@ -263,6 +263,7 @@ void memlog_acc(const char *hdr, uint32_t addr, uint32_t wdata, uint8_t be, bool
 const char * register_name(uint32_t addr);
 uint8_t cpu_en_r, ram_be_r, ram_cen_r, ram_wen_r;
 uint32_t ram_addr_r;
+int bgn = 0;			// BG number to show in tilemap window
 
 int main(int argc, char **argv, char **env)
 {
@@ -577,6 +578,19 @@ int main(int argc, char **argv, char **env)
 						else
 							top->joy_btns &= ~(1 << bit);
 					}
+
+					// switch BG number in tilemap window
+					if (e.window.windowID == SDL_GetWindowID(sdl_tilemap_window)) {
+						bool show = false;
+						switch (e.key.keysym.sym) {
+						case SDLK_0: bgn = 0; show = true; break;
+						case SDLK_1: bgn = 1; show = true; break;
+						case SDLK_2: bgn = 2; show = true; break;
+						case SDLK_3: bgn = 3; show = true; break;
+						}
+						if (show) showTilemapWindow();
+					}
+
 					break;
 				case SDL_WINDOWEVENT:
 					if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
@@ -809,19 +823,45 @@ void createTilemapWindow()
 
 // TODO: other BG, rotation/scaling
 void showTilemapWindow() {
-	printf("Showing tilemap windows for BG0\n");
-	
-	int charBase = gba->gpu->drawer->REG_BG0CNT_Character_Base_Block;	// tile data, in 16KB
-	int screenBase = gba->gpu->drawer->REG_BG0CNT_Screen_Base_Block;	// map data, in 2KB 
-	int screenSize = gba->gpu->drawer->REG_BG0CNT_Screen_Size;			// 0=256x256, 1=512x256, 2=256x512, 3=512x512
-	int hicolor = gba->gpu->drawer->REG_BG0CNT_Colors_Palettes;			// 0=16 colors, 1=256 colors
+	printf("Showing tilemap windows for BG%d\n", bgn);
+	int charBase, screenBase, screenSize, hicolor;
+	switch (bgn) {
+		case 1:
+			charBase   = gba->gpu->drawer->REG_BG1CNT_Character_Base_Block;	
+			screenBase = gba->gpu->drawer->REG_BG1CNT_Screen_Base_Block;	
+			screenSize = gba->gpu->drawer->REG_BG1CNT_Screen_Size;			
+			hicolor    = gba->gpu->drawer->REG_BG1CNT_Colors_Palettes;			
+			break;
+		case 2:
+			charBase   = gba->gpu->drawer->REG_BG2CNT_Character_Base_Block;	
+			screenBase = gba->gpu->drawer->REG_BG2CNT_Screen_Base_Block;	
+			screenSize = gba->gpu->drawer->REG_BG2CNT_Screen_Size;			
+			hicolor    = gba->gpu->drawer->REG_BG2CNT_Colors_Palettes;			
+			break;
+		case 3:
+			charBase   = gba->gpu->drawer->REG_BG3CNT_Character_Base_Block;	
+			screenBase = gba->gpu->drawer->REG_BG3CNT_Screen_Base_Block;	
+			screenSize = gba->gpu->drawer->REG_BG3CNT_Screen_Size;			
+			hicolor    = gba->gpu->drawer->REG_BG3CNT_Colors_Palettes;			
+			break;
+		default: 
+			printf("Invalid BG number\n");
+			// fall through
+		case 0:
+			charBase   = gba->gpu->drawer->REG_BG0CNT_Character_Base_Block;	// tile data, in 16KB
+			screenBase = gba->gpu->drawer->REG_BG0CNT_Screen_Base_Block;	// map data, in 2KB 
+			screenSize = gba->gpu->drawer->REG_BG0CNT_Screen_Size;			// 0=256x256, 1=512x256, 2=256x512, 3=512x512
+			hicolor    = gba->gpu->drawer->REG_BG0CNT_Colors_Palettes;		// 0=16 colors, 1=256 colors
+			break;
+	}	
 
 	int sc_count = 1;
 	int w, h;
 	if (screenSize == 1 || screenSize == 2) sc_count = 2;
 	if (screenSize == 3) sc_count = 4;
 
-	string title("Tilemap Viewer - BG0 ");
+	string title("Tilemap Viewer - BG");
+	title += to_string(bgn);
 	if (screenSize == 0) {
 		title += " 256x256";
 		w = 256; h = 256;
@@ -838,6 +878,7 @@ void showTilemapWindow() {
 		title += " 512x512";
 		w = 512; h = 512;
 	}
+	title += " (press num to switch)";
 
 	SDL_SetWindowTitle(sdl_tilemap_window, title.c_str());
 
