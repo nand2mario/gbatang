@@ -151,7 +151,9 @@ always @(posedge clk) begin
                 off <= off + 6'd1;
                 if (off == 6'd63) begin
                     state <= IDLE;
+`ifdef VERILATOR
                     $display("Data read: %h", mem[addr*64 +: 64]);
+`endif
                 end
             end
 
@@ -161,7 +163,9 @@ always @(posedge clk) begin
                 off <= off + 6'd1;
                 if (off == 6'd63) begin
                     state <= WR_ZERO;
+`ifdef VERILATOR
                     $display("Data written: %h", mem[addr*64 +: 64]);
+`endif
                 end
             end
 
