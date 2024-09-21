@@ -712,7 +712,7 @@ endfunction
 function isreadonly(input [3:0] region);
     case (region)
     4'h0,4'h8,4'h9,4'ha,4'hb,4'hc: isreadonly = 1;
-    // 4'he,4'hf:                     isreadonly = config_backup_type != 1 & config_backup_type != 2;
+    4'he,4'hf:                     isreadonly = config_backup_type != 1 & config_backup_type != 2;
     default: isreadonly = 0;
     endcase
 endfunction

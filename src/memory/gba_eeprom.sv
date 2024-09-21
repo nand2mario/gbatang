@@ -119,6 +119,7 @@ always @(posedge clk) begin
             BIT2: if (write) begin
                 state <= din ? RD_ADDR : WR_ADDR;
                 cnt <= model_detected ? 13 : 5;     // 14 bit or 6 bit address
+                addr <= 0;
                 off <= 0;
             end
 
@@ -128,9 +129,9 @@ always @(posedge clk) begin
                     state <= state == RD_ADDR ? RD_ZERO : WR_DATA;
 
                     if (state == RD_ADDR)
-                        $display("EEPROM read address %h", {addr[13:1], din});
+                        $display("EEPROM read address %h (address len=%d)", {addr[13:1], din}, model_detected ? 14 : 6);
                     else
-                        $display("EEPROM write address %h", {addr[13:1], din});
+                        $display("EEPROM write address %h (address len=%d)", {addr[13:1], din}, model_detected ? 14 : 6);
                 end
                 cnt <= cnt - 1;
             end
@@ -148,14 +149,20 @@ always @(posedge clk) begin
 
             RD_DATA: if (~write) begin
                 off <= off + 6'd1;
-                if (off == 6'd63) state <= IDLE;
+                if (off == 6'd63) begin
+                    state <= IDLE;
+                    $display("Data read: %h", mem[addr*64 +: 64]);
+                end
             end
 
             // write command
             WR_DATA: if (write) begin
                 // writing to memory
                 off <= off + 6'd1;
-                if (off == 6'd63) state <= WR_ZERO;
+                if (off == 6'd63) begin
+                    state <= WR_ZERO;
+                    $display("Data written: %h", mem[addr*64 +: 64]);
+                end
             end
 
             WR_ZERO: 
