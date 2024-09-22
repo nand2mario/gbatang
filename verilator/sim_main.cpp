@@ -821,7 +821,6 @@ void createTilemapWindow()
 	}
 }
 
-// TODO: other BG, rotation/scaling
 void showTilemapWindow() {
 	printf("Showing tilemap windows for BG%d\n", bgn);
 	int charBase, screenBase, screenSize, hicolor;
@@ -908,18 +907,20 @@ void showTilemapWindow() {
 					for (int x = 0; x < 8; x++) {
 						Pixel *p = &bg[y0 + sy * 8 + y][x0 + sx * 8 + x];
 						uint16_t bgr5;
+						int xx = hflip ? 7 - x : x;
+						int yy = vflip ? 7 - y : y;
 						if (hicolor) {
 							// 1 pixel per byte, 4 pixels per word
-							int vram = charBase * 16384 + tile * 64 + y * 8 + x;
-							uint8_t color = (ivram_lo->mem[vram / 4] >> (x % 4 * 8)) & 0xff;
+							int vram = charBase * 16384 + tile * 64 + yy * 8 + xx;
+							uint8_t color = (ivram_lo->mem[vram / 4] >> (xx % 4 * 8)) & 0xff;
 							bgr5 = (color & 1) ? 
 									(palette_bg->ram[color >> 1] >> 16) :
 									(palette_bg->ram[color >> 1] & 0xffff);
 
 						} else {
 							// 2 pixels per byte, 8 pixels per word
-							int vram = charBase * 16384 + tile * 32 + y * 4 + x / 2;		
-							uint8_t color = (ivram_lo->mem[vram / 4] >> (x * 4)) & 0xf;
+							int vram = charBase * 16384 + tile * 32 + yy * 4 + xx / 2;		
+							uint8_t color = (ivram_lo->mem[vram / 4] >> (xx * 4)) & 0xf;
 							int pal_addr = color ? palette * 16 + color : 0;		// color 0 is "backdrop" (palette 0 color 0)
 							bgr5 = (pal_addr & 1) ? 
 									(palette_bg->ram[pal_addr >> 1] >> 16) :
