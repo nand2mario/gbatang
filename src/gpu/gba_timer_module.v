@@ -75,14 +75,25 @@ module gba_timer_module(clk, gb_on, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, 
             prescalecounter <= 0;
         
         end else if (gb_on) begin
-            
+            reg start_stop_written, start_stop;
+            reg [15:0] counter_reload;
+            start_stop_written = 0;
+            start_stop = 0;
+            counter_reload = L_Counter_Reload;
+            // 4000102h - TM0CNT_H - Timer 0 Control (R/W)
+            //   7     Timer Start/Stop  (0=Stop, 1=Operate)
+            if (gb_bus_ena & ~gb_bus_rnw & gb_bus_adr == reg_l.Adr & gb_bus_be[2]) begin
+                start_stop_written = 1;
+                start_stop = gb_bus_din[23];
+            end
+
             // set_settings
-            if (H_Timer_Start_Stop_written) begin
-                if (H_Timer_Start_Stop & timer_on == 1'b0) begin        // posedge timer_on
-                    counter <= {1'b0, L_Counter_Reload};
+            if (start_stop_written) begin
+                if (start_stop & ~timer_on) begin        // posedge timer_on
+                    counter <= counter_reload;
                     prescalecounter <= {11{1'b0}};
                 end 
-                timer_on <= H_Timer_Start_Stop[reg_h_timer_start_stop.upper];
+                timer_on <= start_stop;
             end 
             
             case (H_Prescaler)
