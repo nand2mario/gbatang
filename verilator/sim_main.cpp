@@ -176,7 +176,7 @@ void gba_load(uint8_t *rom, int size, int backup_type)
 	top->loading = 3;
 	do loading_step(); while (!posedge);
 	top->loader_do_valid = 1;
-	top->loader_do = backup_type == BACKUP_FLASH;	// bit 0 is FLASH
+	top->loader_do = backup_type;
 	do loading_step(); while (!posedge);
 	printf("Finished configuring backup type\n");
 

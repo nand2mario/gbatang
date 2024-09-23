@@ -189,6 +189,11 @@ reg         bram_rd_buf, bram_wr_buf;
 reg [31:0]  bram_wdata_buf;
 reg [3:0]   bram_be_buf;
 reg [1:0]   bram_port_buf;
+reg [25:2]  sdram_addr_buf;
+reg         sdram_rd_buf, sdram_wr_buf;
+reg [31:0]  sdram_wdata_buf;
+reg [3:0]   sdram_be_buf;
+reg [1:0]   sdram_port_buf;
 
 // delayed
 reg  [1:0]  bram_port_r;
@@ -263,6 +268,47 @@ always @* begin
     end
 end
 
+// SDRAM memory requests
+always @* begin
+    if (state == MAIN & ~dma_on) begin
+        sdram_rd = 0; sdram_wr = 0;
+        sdram_addr = 24'hbadbad; sdram_wdata = 0; sdram_be = 0;
+        sdram_port = PORT_NONE;
+        if (rom_en) begin
+            if (~issingle(rom_addr[27:24])) begin
+                sdram_rd = 1;
+                sdram_addr = tosdram(rom_addr);
+                if (thumb)
+                    sdram_be = rom_addr[1] ? 4'b1100 : 4'b0011; 
+                else
+                    sdram_be = 4'b1111;                
+                sdram_port = PORT_ROM;
+            end
+        end else if (ram_cen & ~issingle(ram_addr[27:24])) begin
+            sdram_rd = ~ram_wen;
+            sdram_wr = ram_wen;
+            if (isreadonly(ram_addr[27:24])) begin
+                sdram_rd = 1;
+                sdram_wr = 0;
+            end
+            sdram_addr = tosdram(ram_addr);
+            sdram_wdata = ram_wdata;
+            if (ram_addr[27:25] == 3'b111)          // 8-bit access for flash/SRAM
+                sdram_be = 4'b1 << ram_addr[1:0];
+            else
+                sdram_be = ram_be;
+            sdram_port = PORT_RAM;
+        end
+    end else begin
+        sdram_rd = sdram_rd_buf;
+        sdram_wr = sdram_wr_buf;
+        sdram_addr = sdram_addr_buf;
+        sdram_wdata = sdram_wdata_buf;
+        sdram_be = sdram_be_buf;
+        sdram_port = sdram_port_buf;
+    end
+end
+
 // the state machine
 always @(posedge clk) begin
     reg [1:0] port;
@@ -278,7 +324,7 @@ always @(posedge clk) begin
         hi = 0;
 
         // default values
-        sdram_rd <= 0; sdram_wr <= 0;
+        sdram_rd_buf <= 0; sdram_wr_buf <= 0;
 
         // new rom value from bram needs to be saved as 2nd request may overwrite it
         if (state == REQ2_BRAM | state == REQ2_START)
@@ -321,19 +367,19 @@ always @(posedge clk) begin
                     end else begin                              // start multi-cycle request 2 for RAM
                         // req2.sdram
                         state <= REQ2_START;
-                        sdram_rd <= ~ram_wen;
-                        sdram_wr <= ram_wen;
+                        sdram_rd_buf <= ~ram_wen;
+                        sdram_wr_buf <= ram_wen;
                         if (isreadonly(ram_addr[27:24])) begin
-                            sdram_rd <= 1;
-                            sdram_wr <= 0;
+                            sdram_rd_buf <= 1;
+                            sdram_wr_buf <= 0;
                         end
-                        sdram_addr <= tosdram(ram_addr);
-                        sdram_wdata <= ram_wdata;
+                        sdram_addr_buf <= tosdram(ram_addr);
+                        sdram_wdata_buf <= ram_wdata;
                         if (ram_addr[27:25] == 3'b111)          // 8-bit access for flash/SRAM
-                            sdram_be <= 4'b1 << ram_addr[1:0];
+                            sdram_be_buf <= 4'b1 << ram_addr[1:0];
                         else
-                            sdram_be <= ram_be;
-                        sdram_port <= PORT_RAM;
+                            sdram_be_buf <= ram_be;
+                        sdram_port_buf <= PORT_RAM;
                     end
                 end else 
                     double_req <= 0;
@@ -345,54 +391,37 @@ always @(posedge clk) begin
                 // idle. start multi-cycle request 1 for DMA / ROM / RAM
                 if (dma_on) begin
                     if (dma_ena) begin
-                        sdram_rd  <= ~dma_wr;
-                        sdram_wr  <= dma_wr;
+                        sdram_rd_buf  <= ~dma_wr;
+                        sdram_wr_buf  <= dma_wr;
                         if (isreadonly(dma_addr[27:24])) begin
-                            sdram_rd <= 1;
-                            sdram_wr <= 0;
+                            sdram_rd_buf <= 1;
+                            sdram_wr_buf <= 0;
                         end
-                        sdram_addr <= tosdram(dma_addr);
-                        sdram_wdata <= dma_wdata;
+                        sdram_addr_buf <= tosdram(dma_addr);
+                        sdram_wdata_buf <= dma_wdata;
                         if (dma_addr[27:25] == 3'b111)          // 8-bit access for flash/SRAM
-                            sdram_be <= 4'b1 << dma_addr[1:0];
+                            sdram_be_buf <= 4'b1 << dma_addr[1:0];
                         else
-                            sdram_be <= dma_be;
-                        sdram_port <= PORT_DMA;
+                            sdram_be_buf <= dma_be;
+                        sdram_port_buf <= PORT_DMA;
                         state <= REQ1_START;
                     end
-                end else if (rom_en) begin
-                    sdram_rd <= 1;
-                    sdram_wr <= 0;
-                    sdram_addr <= tosdram(rom_addr);
-                    if (thumb)
-                        sdram_be <= rom_addr[1] ? 4'b1100 : 4'b0011; 
-                    else
-                        sdram_be <= 4'b1111;
-                    sdram_port <= PORT_ROM;
-                    state <= REQ1_START;
-                end else if (ram_cen) begin
-                    sdram_rd <= ~ram_wen;
-                    sdram_wr <= ram_wen;
-                    if (isreadonly(ram_addr[27:24])) begin
-                        sdram_rd <= 1;
-                        sdram_wr <= 0;
-                    end
-                    sdram_addr <= tosdram(ram_addr);
-                    sdram_wdata <= ram_wdata;
-                    if (ram_addr[27:25] == 3'b111)          // 8-bit access for flash/SRAM
-                        sdram_be <= 4'b1 << ram_addr[1:0];
-                    else
-                        sdram_be <= ram_be;
-                    sdram_port <= PORT_RAM;
-                    state <= REQ1_START;
+                end else if (rom_en | ram_cen) begin            // for ROM or RAM, request is issued in cycle 0
+                    sdram_rd_buf <= sdram_rd;
+                    sdram_wr_buf <= sdram_wr;
+                    sdram_addr_buf <= sdram_addr;
+                    sdram_wdata_buf <= sdram_wdata;
+                    sdram_be_buf <= sdram_be;
+                    sdram_port_buf <= sdram_port;
+                    state <= REQ1_WAIT;                         // skip start state and go directly to wait
                 end else if ((loading == 2'd1 | loading == 2'd2) & loader_writing) begin     // start loading
-                    sdram_wr <= 1;
-                    sdram_addr <= tosdram(loader_addr);
+                    sdram_wr_buf <= 1;
+                    sdram_addr_buf <= tosdram(loader_addr);
                     if (loading == 2)
-                        sdram_addr[16] <= loader_addr[16];  // hack to write to bank 1
-                    sdram_wdata <= {4{loader_d}};
-                    sdram_be <= 4'b1 << loader_addr[1:0];
-                    sdram_port <= PORT_RAM;
+                        sdram_addr_buf[16] <= loader_addr[16];  // hack to write to bank 1
+                    sdram_wdata_buf <= {4{loader_d}};
+                    sdram_be_buf <= 4'b1 << loader_addr[1:0];
+                    sdram_port_buf <= PORT_RAM;
                     state <= REQ1_START;
                 end
             end
@@ -545,6 +574,7 @@ always @(posedge clk) begin
             if (loader_addr[2:0] == 0) begin
                 config_backup_type <= loader_data;
                 config_flash_backup <= (loader_data == 8'h1);
+                $display("backup type=%d", loader_data);
                 // auto-detection works fine, so we don't need this
                 // if (loader_data == 8'd3)        
                 //     config_eeprom_type <= 0;            // 4 is 64kbit eeprom (default), 3 is 4kbit eeprom
