@@ -32,7 +32,7 @@ module gba_timer_module(clk, gb_on, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, 
     wire [reg_h_prescaler.upper:reg_h_prescaler.lower]               H_Prescaler;
     wire [reg_h_count_up.upper:reg_h_count_up.lower]                 H_Count_up;
     wire [reg_h_timer_irq_enable.upper:reg_h_timer_irq_enable.lower] H_Timer_IRQ_Enable;
-    wire [reg_h_timer_start_stop.upper:reg_h_timer_start_stop.lower] H_Timer_Start_Stop;
+    // wire [reg_h_timer_start_stop.upper:reg_h_timer_start_stop.lower] H_Timer_Start_Stop;
     
     wire          H_Timer_Start_Stop_written;
     
@@ -46,7 +46,7 @@ module gba_timer_module(clk, gb_on, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, 
     eProcReg_gba #(reg_h_prescaler) iH_Prescaler(clk, `GB_BUS_PORTS_LIST, H_Prescaler, H_Prescaler);
     eProcReg_gba #(reg_h_count_up) iH_Count_up(clk, `GB_BUS_PORTS_LIST, H_Count_up, H_Count_up);
     eProcReg_gba #(reg_h_timer_irq_enable) iH_Timer_IRQ_Enable(clk, `GB_BUS_PORTS_LIST, H_Timer_IRQ_Enable, H_Timer_IRQ_Enable);
-    eProcReg_gba #(reg_h_timer_start_stop) iH_Timer_Start_Stop(clk, `GB_BUS_PORTS_LIST, H_Timer_Start_Stop, H_Timer_Start_Stop, H_Timer_Start_Stop_written);
+    // eProcReg_gba #(reg_h_timer_start_stop) iH_Timer_Start_Stop(clk, `GB_BUS_PORTS_LIST, H_Timer_Start_Stop, H_Timer_Start_Stop, H_Timer_Start_Stop_written);
     
     reg [31:0] reg_dout;
     reg reg_dout_en;
@@ -56,13 +56,13 @@ module gba_timer_module(clk, gb_on, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, 
         reg_dout_en <= 0;
         if (gb_bus_ena && gb_bus_rnw) begin
             if (gb_bus_adr == reg_l.Adr) begin
-                reg_dout <= {8'b0, H_Timer_Start_Stop, H_Timer_IRQ_Enable, 3'b0, H_Count_up, H_Prescaler, counter_readback};
+                reg_dout <= {8'b0, timer_on, H_Timer_IRQ_Enable, 3'b0, H_Count_up, H_Prescaler, counter_readback};
                 reg_dout_en <= 1;
             end
         end
     end
 
-    assign debugout = {8'h00, H_Timer_Start_Stop, H_Timer_IRQ_Enable, 3'b000, H_Count_up, H_Prescaler, counter_readback};    
+    assign debugout = {8'h00, timer_on, H_Timer_IRQ_Enable, 3'b000, H_Count_up, H_Prescaler, counter_readback};    
     
     always @(posedge clk) begin
         tick <= 1'b0;
@@ -81,14 +81,14 @@ module gba_timer_module(clk, gb_on, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, 
             start_stop = 0;
             counter_reload = L_Counter_Reload;
 
-            start_stop_written = H_Timer_Start_Stop_written;
-            start_stop = H_Timer_Start_Stop;
+            // start_stop_written = H_Timer_Start_Stop_written;
+            // start_stop = H_Timer_Start_Stop;
             // 4000102h - TM0CNT_H - Timer 0 Control (R/W)
             //   7     Timer Start/Stop  (0=Stop, 1=Operate)
-            // if (gb_bus_ena & ~gb_bus_rnw & gb_bus_adr == reg_l.Adr & gb_bus_be[2]) begin
-            //     start_stop_written = 1;
-            //     start_stop = gb_bus_din[23];
-            // end
+            if (gb_bus_ena & ~gb_bus_rnw & gb_bus_adr == reg_l.Adr & gb_bus_be[2]) begin
+                start_stop_written = 1;
+                start_stop = gb_bus_din[23];
+            end
 
             // set_settings
             if (start_stop_written) begin
