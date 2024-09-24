@@ -76,10 +76,8 @@ module gba_timer_module(clk, gb_on, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, 
         
         end else if (gb_on) begin
             reg start_stop_written, start_stop;
-            reg [15:0] counter_reload;
             start_stop_written = 0;
             start_stop = 0;
-            counter_reload = L_Counter_Reload;
 
             // start_stop_written = H_Timer_Start_Stop_written;
             // start_stop = H_Timer_Start_Stop;
@@ -96,7 +94,7 @@ module gba_timer_module(clk, gb_on, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, 
                 if (start_stop & ~timer_on) begin        // posedge timer_on
                 // if (gb_bus_din[23] & ~timer_on) begin        // posedge timer_on
                     if (gb_bus_be[0])
-                        counter <= start_stop;
+                        counter <= gb_bus_din[15:0];
                     else
                         counter <= L_Counter_Reload;
                     prescalecounter <= {11{1'b0}};
