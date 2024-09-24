@@ -861,7 +861,7 @@ else if ( cpu_en )
 				    cpsr_n <= spsr[10];
 				else 
 				    cpsr_n <= dp_ans[31];
-        end else if ( cmd_is_mult|cmd_is_multlx ) begin
+        end else if ( cmd_is_mult|cmd_is_multlx|cmd_is_multl ) begin
 		    if ( cmd[20] )
 			    cpsr_n <= sum_rn_rm[31];
         end else if ( cmd_is_ldm & ( cmd_sum_m==5'b0 ) & ldm_change )
@@ -1812,7 +1812,11 @@ assign wait_en = (code_rm_vld   & cha_vld            & cha_num       == code_rm_
                 //  (code_stm_vld  & cha_vld            & (code[15:0] & (~code[15:0] + 16'd1)) == (16'd1 << cha_num)) |
                  (code_stm_vld  & cha_vld            & code_stm_num  == cha_num) |
                  (code_rm_vld   & ldm_vld & ~hold_en & ldm_num       == code_rm_num) | 
-                 (code_rs_vld   & ldm_vld & ~hold_en & ldm_num       == code_rs_num);
+                 (code_rs_vld   & ldm_vld & ~hold_en & ldm_num       == code_rs_num) |
+                 // last inst is MSR, and this inst uses LR, SP, SPSR
+                 (code_rm_vld   & (cmd_is_msr0 | cmd_is_msr1) & cmd_ok & (code_rm_num == 4'hD | code_rm_num == 4'hE)) |
+                 (code_rs_vld   & (cmd_is_msr0 | cmd_is_msr1) & cmd_ok & (code_rs_num == 4'hD | code_rs_num == 4'hE))
+                 ;
 
 endmodule
 
