@@ -48,28 +48,29 @@
 // PC increment logic) were made to other parts of the core to make this work.
 //
 
-module gba_cpu (clk, cpu_en, cpu_restart, fiq, irq, ram_abort, ram_rdata, rom_abort, rom_data,
-    rst, ram_addr, ram_cen, ram_flag, ram_wdata, ram_wen, rom_addr, rom_en, thumb ); 
+module gba_cpu (
 
-input            clk;
-input            cpu_en;
-input            cpu_restart;
-input            fiq;
-input            irq;
-input            ram_abort;
-input  [31:0]    ram_rdata;
-input            rom_abort;
-input  [31:0]    rom_data;
-input            rst;
+input                clk,
+input                cpu_en,
+input                cpu_restart,
+input                fiq,
+input                irq,
+input                ram_abort,
+input      [31:0]    ram_rdata,
+input                rom_abort,
+input      [31:0]    rom_data,
+input                rst,
+    
+output     [31:0]    ram_addr,
+output               ram_cen,
+output reg [3:0]     ram_flag,
+output reg [31:0]    ram_wdata,
+output               ram_wen,
+output     [31:0]    rom_addr,
+output               rom_en,
+output               thumb
 
-output [31:0]    ram_addr;
-output           ram_cen;
-output [3:0]     ram_flag;
-output [31:0]    ram_wdata;
-output           ram_wen;
-output [31:0]    rom_addr;
-output           rom_en;
-output           thumb;
+);
 
 /******************************************************/
 //register definition area
@@ -113,8 +114,6 @@ reg    [31:0]    r0, r1, r2, r3, r4, r5, r6, r7;
 reg    [31:0]    r8_fiq, r8_usr;
 reg    [31:0]    r9_fiq, r9_usr;
 reg    [31:0]    ra_fiq, ra_usr;
-reg    [3:0]     ram_flag;
-reg    [31:0]    ram_wdata;
 reg    [31:0]    rb_fiq, rb_usr;
 reg    [31:0]    rc_fiq, rc_usr;
 reg    [31:0]    rd, rd_abt, rd_fiq, rd_irq, rd_svc, rd_und, rd_usr;
@@ -177,14 +176,9 @@ wire   [31:0]    or_ans;
 wire   [31:0]    r8;
 wire   [31:0]    r9;
 wire   [31:0]    ra;
-wire   [31:0]    ram_addr;
-wire             ram_cen;
-wire             ram_wen;
 wire   [31:0]    rb;
 wire   [31:0]    rc;
 wire   [31:0]    rf_b;
-wire   [31:0]    rom_addr;
-wire             rom_en;
 wire   [31:0]    sum_middle;
 wire   [31:0]    sum_rn_rm;
 wire             to_rf_vld;
@@ -199,14 +193,15 @@ wire [31:0] thumb_decoded_inst;
 reg  thumb_addr;                // which half-word to decode
 wire thumb_load_addr_fix;       // load address instruction fix
 assign thumb = cpsr_t;
-wire thumb_bl_fix;              // thumb BL, target address should -1
-reg  cmd_thumb, cmd_thumb_load_addr_fix, cmd_thumb_bl_fix;
+wire code_is_bll, code_is_blh;  // code is BLL / BLH 
+reg  cmd_thumb, cmd_thumb_load_addr_fix;
+reg cmd_is_bll, cmd_is_blh;
 
 ThumbDecoder thumb_decoder (
     .CLK(clk), .nRESET(~rst), .CLKEN(cpu_en),
     .InstForDecode(rom_data), .HalfWordAddress(thumb_addr),   
     .ThumbDecoderEn(cpsr_t), .ExpandedInst(thumb_decoded_inst),
-    .ThADR(thumb_load_addr_fix), .ThBL(thumb_bl_fix)
+    .ThADR(thumb_load_addr_fix), .ThBLL(code_is_bll), .ThBLH(code_is_blh)
 );
 
 always @(posedge clk) begin
@@ -350,8 +345,8 @@ always @ (cpsr_t or code_is_ldrh1 or code_is_ldrsb1 or code_is_ldrsh1 or code or
 if ( code_is_ldrh1|code_is_ldrsb1|code_is_ldrsh1 )
    	code_rm = {code[11:8], code[3:0]};
 else if (code_is_b)	
-    code_rm = cpsr_t ? {{7{code[23]}}, code[23:0], 1'b0} :  // thumb, the imm24 contains offset in half-words
-              {{6{code[23]}}, code[23:0], 2'b0};            // arm, imm24 contains offset in words
+    code_rm = cpsr_t ? {{7{code[23]}}, code[23:0], 1'b0} :  // thumb B/BLL/BLH, the imm24 contains offset in half-words
+              {{6{code[23]}}, code[23:0], 2'b0};            // arm B/BL, imm24 contains offset in words
 else if (code_is_ldm)
     case (code[24:23])
     2'd0 : code_rm = {(code_sum_m - 1'b1), 2'b0};
@@ -523,7 +518,8 @@ else if ( cpu_en )
 	    cmd <= code;
         cmd_thumb <= thumb;
         cmd_thumb_load_addr_fix <= thumb_load_addr_fix;
-        cmd_thumb_bl_fix <= thumb_bl_fix;
+        cmd_is_bll <= thumb & code_is_bll;
+        cmd_is_blh <= thumb & code_is_blh;
         if (code_is_ldm & code[15:0] == 16'b0)     // emtpy ldm rlist equals {PC}
             cmd[15] <= 1'b1;
     end else if ( cmd_is_swp ) begin
@@ -683,10 +679,10 @@ else if ( cmd_is_mult | cmd_is_multl )
 	else
 	    rn = 0;
 else if ( cmd_is_b ) begin
-    if (thumb & cmd_thumb_bl_fix)
-        rn = rf - 2;        // thumb BL offset is based on first-part instruction. so we compensate here
+    if (thumb & cmd_is_blh)
+        rn = re;            // BLH jumps to LR + offset
     else
-        rn = rf;
+        rn = rf;            // all other B/BL jumps to PC + offset
 end else if ( hold_en & hold_en_dly )
     rn = rn_register;
 else
@@ -820,10 +816,11 @@ always @(posedge clk)
 if ( rst )
     irq_flag <= 1'b0;
 else if ( cpu_en )
-    if ( irq & (~thumb | ~thumb_bl_fix))        // do not interrupt thumb BL
-         irq_flag <= 1'b1;
+    // if ( irq & (~thumb | ~thumb_bl_fix))        // do not interrupt thumb BL
+    if (irq)
+        irq_flag <= 1'b1;
     else if ( cmd_flag )
-       irq_flag <= 1'b0;
+        irq_flag <= 1'b0;
 
 
 always @(posedge clk)
@@ -1132,7 +1129,7 @@ else
     to_data = sum_rn_rm; 	
 
 assign to_rf_vld = cmd_ok & ((cmd[15:12]==4'hf & (cmd_is_dp0 | cmd_is_dp1 | cmd_is_dp2) & 
-                    cmd[24:23]!=2'b10) | (cmd_is_b | cmd_is_bx)); 
+                    cmd[24:23]!=2'b10) | (cmd_is_b | cmd_is_bx) & ~cmd_is_bll); 
 
 always @ ( cmd_ok or cmd_is_ldrh0 or cmd_is_ldrh1 or cmd_is_ldrsb0 or cmd_is_ldrsb1 or cmd_is_ldrsh0 or cmd_is_ldrsh1 or cmd_is_ldr0 or cmd_is_ldr1 or cmd or cmd_is_swp )
 if ( cmd_ok )
@@ -1594,9 +1591,14 @@ else if ( cpu_en ) begin
         re_abt <= rf_b;		
     else if ( ldm_vld & ldm_num==4'he & ~ldm_usr & cpsr_m==5'b10111 )
 	    re_abt <= ldm_data;
-	else if ( cmd_ok & cmd_is_b & cmd[24] & cpsr_m==5'b10111 )
-	    re_abt <= {rf_b[31:1], cpsr_t};     // set bit 0 for thumb mode
-	else if ( cmd_ok & to_vld  & to_num== 4'he & cpsr_m==5'b10111 )
+	else if ( cmd_ok & cmd_is_b & cmd[24] & cpsr_m==5'b10111 ) 
+    begin
+        if (cmd_is_bll)
+            re_abt <= sum_rn_rm;                    // BLL: LR = PC + offset
+        else        
+	        re_abt <= {rf_b[31:1], cpsr_t};         // otherwise: LR = return address
+	end 
+    else if ( cmd_ok & to_vld  & to_num== 4'he & cpsr_m==5'b10111 )
 	    re_abt <= to_data;
 	else if ( go_vld & go_num==4'he & cpsr_m==5'b10111 )
 	    re_abt <= go_data;
@@ -1614,7 +1616,12 @@ else if ( cpu_en ) begin
     end else if ( ldm_vld & ldm_num==4'he & ~ldm_usr & cpsr_m==5'b10001 )
 	    re_fiq <= ldm_data;
 	else if ( cmd_ok & cmd_is_b & cmd[24] & cpsr_m==5'b10001 )
-	    re_fiq <= {rf_b[31:1], cpsr_t};
+    begin
+        if (cmd_is_bll)
+            re_fiq <= sum_rn_rm;                    // BLL: LR = PC + offset
+        else        
+	        re_fiq <= {rf_b[31:1], cpsr_t};         // otherwise: LR = return address
+	end 
 	else if ( cmd_ok & to_vld & to_num== 4'he & cpsr_m==5'b10001 )
 	    re_fiq <= to_data;
 	else if ( go_vld & go_num==4'he & cpsr_m==5'b10001 )
@@ -1646,7 +1653,12 @@ else if ( cpu_en ) begin
     else if ( ldm_vld & ldm_num==4'he & ~ldm_usr & cpsr_m==5'b10011 )
 	    re_svc <= ldm_data;
 	else if ( cmd_ok & cmd_is_b & cmd[24] & cpsr_m==5'b10011 )
-	    re_svc <= {rf_b[31:1], cpsr_t};
+    begin
+        if (cmd_is_bll)
+            re_svc <= sum_rn_rm;                    // BLL: LR = PC + offset
+        else        
+	        re_svc <= {rf_b[31:1], cpsr_t};         // otherwise: LR = return address
+	end 
 	else if ( cmd_ok & to_vld & to_num== 4'he & cpsr_m==5'b10011 )
 	    re_svc <= to_data;
 	else if ( go_vld & go_num==4'he & cpsr_m==5'b10011 )
@@ -1662,7 +1674,12 @@ else if ( cpu_en ) begin
     else if ( ldm_vld & ldm_num==4'he & ~ldm_usr & cpsr_m==5'b11011 )
 	    re_und <= ldm_data;
 	else if ( cmd_ok & cmd_is_b & cmd[24] & cpsr_m==5'b11011 )
-	    re_und <= {rf_b[31:1], cpsr_t};
+    begin
+        if (cmd_is_bll)
+            re_und <= sum_rn_rm;                    // BLL: LR = PC + offset
+        else        
+	        re_und <= {rf_b[31:1], cpsr_t};         // otherwise: LR = return address
+	end 
 	else if ( cmd_ok & to_vld & to_num== 4'he & cpsr_m==5'b11011 )
 	    re_und <= to_data;
 	else if ( go_vld & go_num==4'he & cpsr_m==5'b11011 )
@@ -1678,7 +1695,12 @@ else if ( cpu_en ) begin
 	    re_usr <= ldm_data;
 	else if ( cmd_ok & cmd_is_b & cmd[24] & ((cpsr_m!=5'b10001)&(cpsr_m!=5'b11011)&
             (cpsr_m!=5'b10010)&(cpsr_m!=5'b10111)&(cpsr_m!=5'b10011)) )
-	    re_usr <= {rf_b[31:1], cpsr_t};
+    begin
+        if (cmd_is_bll)
+            re_usr <= sum_rn_rm;                    // BLL: LR = PC + offset
+        else        
+	        re_usr <= {rf_b[31:1], cpsr_t};         // otherwise: LR = return address
+	end 
 	else if ( cmd_ok & to_vld  & to_num== 4'he & ((cpsr_m!=5'b10001)&(cpsr_m!=5'b11011)&
             (cpsr_m!=5'b10010)&(cpsr_m!=5'b10111)&(cpsr_m!=5'b10011)) )
 	    re_usr <= to_data;
@@ -1710,7 +1732,7 @@ else if ( cpu_en ) begin
         rf <= ldm_data;	
     else if ( cmd_ok & (cmd_is_dp0|cmd_is_dp1|cmd_is_dp2) & cmd[24:23]!=2'b10 & cmd[15:12]==4'hf )
 	    rf <= dp_ans;	
-	else if ( cmd_ok & (cmd_is_b | cmd_is_bx) )
+	else if ( cmd_ok & (cmd_is_b | cmd_is_bx) & ~cmd_is_bll)        // BLL does not update R15
 	    rf <= sum_rn_rm;
 	else if ( go_vld & go_num==4'hf )
         rf <= go_data;
@@ -1813,7 +1835,7 @@ assign wait_en = (code_rm_vld   & cha_vld            & cha_num       == code_rm_
                  (code_stm_vld  & cha_vld            & code_stm_num  == cha_num) |
                  (code_rm_vld   & ldm_vld & ~hold_en & ldm_num       == code_rm_num) | 
                  (code_rs_vld   & ldm_vld & ~hold_en & ldm_num       == code_rs_num) |
-                 // last inst is MSR, and this inst uses LR, SP, SPSR
+                 // last inst is MSR, and this inst uses LR or SP
                  (code_rm_vld   & (cmd_is_msr0 | cmd_is_msr1) & cmd_ok & (code_rm_num == 4'hD | code_rm_num == 4'hE)) |
                  (code_rs_vld   & (cmd_is_msr0 | cmd_is_msr1) & cmd_ok & (code_rs_num == 4'hD | code_rs_num == 4'hE))
                  ;

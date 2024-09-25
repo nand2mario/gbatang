@@ -15,9 +15,9 @@ module ThumbDecoder(
     output          ThADR,              // THUMB ADD(5) and PC-relative load correction. PC bit 1 should be cleared.
                                         // 1: this is a thumb load address instruciton (see datasheet 5.12.1)
                                         //    or PC-relative load instruction (datasheet 5.6.1)
-    output reg      ThBL                // THUMB BL correction. 1: this is the 2nd part of BL instruction.
-                                        // When calculating the target address, it should be subtracted by 1.
-);    
+    output reg      ThBLL,              // BLL instruction, ExpandedInst is BL with imm24 = imm11 << 11 (signed extended)
+    output reg      ThBLH               // BLH instruction, ExpandedInst is BL with imm24 = imm11       (signed extended)
+);
 
 wire [15:0]     HalfWordForDecode;
 reg [31:0]      DecoderOut;
@@ -68,8 +68,9 @@ always @(HalfWordForDecode) begin
     // Move Instructions
     ThBLFP_Reg_EN = 1'b0;
     ThADR_Int = 1'b0;
+    ThBLL = 0;
+    ThBLH = 0;
     DecoderOut[31:0] = {32{1'b0}};
-    ThBL = 0;
 
     casez (HalfWordForDecode[15:6])
     10'b00100?????: begin		// MOV1
@@ -426,24 +427,21 @@ always @(HalfWordForDecode) begin
         DecoderOut[10:0] = HalfWordForDecode[10:0];
     end
 
-    10'b11110?????: begin		// 1st part of BL
-        ThBLFP_Reg_EN = 1'b1;		                        // Register higher 11 bits of imm24 offset
-        DecoderOut[31:28] = 4'b1110;
-        DecoderOut[27:24] = 4'b0000;
-        DecoderOut[23:11] = 13'b0000000000000;
-        DecoderOut[10:0] = 11'b00000000000;
-    end 
-
-    10'b111?1?????: begin        // 2nd part of BL
-        reg [21:0] full_offset;
-        full_offset = {ThBLFP_Reg, HalfWordForDecode[10:0]};
-        // full_offset -= 22'd1;                               // -1: thumb BL offset is based on first-part instruction
-        //                                                     //     and here we are in the second instruction
-                                                               // this is too slow, so leave this to CPU w/ tag ThBL
-        ThBL = 1;
+    10'b11110?????: begin		// BLL
+        // ThBLFP_Reg_EN = 1'b1;		                        // Register higher 11 bits of imm24 offset
+        ThBLL = 1;
         DecoderOut[31:28] = 4'b1110;
         DecoderOut[27:24] = 4'b1011;
-        DecoderOut[23:0] = {{2{full_offset[21]}}, full_offset};    // sign extention
+        DecoderOut[23:0] = {{2{HalfWordForDecode[10]}}, HalfWordForDecode[10:0], 11'b0};
+    end 
+
+    10'b111?1?????: begin       // BLH
+        // reg [21:0] full_offset;
+        // full_offset = {ThBLFP_Reg, HalfWordForDecode[10:0]};
+        ThBLH = 1;
+        DecoderOut[31:28] = 4'b1110;
+        DecoderOut[27:24] = 4'b1011;
+        DecoderOut[23:0] = {{13{1'b0}}, HalfWordForDecode[10:0]};
     end
 
     10'b010001110?: begin		// BX
