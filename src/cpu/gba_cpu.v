@@ -128,7 +128,7 @@ reg    [11:0]    spsr, spsr_abt, spsr_fiq, spsr_irq, spsr_svc, spsr_und;    // T
 reg    [4:0]     sum_m;
 reg    [31:0]    to_data;
 reg    [3:0]     to_num;
-
+reg              basereg_in_list;       // LDM/STM: base register is in the register list
 
 /******************************************************/
 //wire definition area
@@ -545,6 +545,14 @@ else if ( cpu_en )
 		cmd[14] <= (|(cmd[13:0])) ? cmd[14] : 1'b0;	 
 		cmd[15] <= (|(cmd[14:0])) ? cmd[15] : 1'b0;	 		
     end	
+
+always @(posedge clk)
+if (rst)
+    basereg_in_list <= 0;
+else begin
+    if (cpu_en & ~hold_en & code_is_ldm) 
+        basereg_in_list <= code[code[19:16]];
+end
 
 assign cmd_is_b      = cmd[27:25]==3'b101;
 assign cmd_is_bx     = {cmd[27:23],cmd[20],cmd[7],cmd[4]}==8'b00010001;
@@ -1110,7 +1118,7 @@ assign to_vld = cmd_ok & ( cmd_is_mrs |
                 cmd_is_mult | cmd_is_multl | cmd_is_multlx | 
                 ((cmd_is_ldrh0|cmd_is_ldrh1|cmd_is_ldrsb0|cmd_is_ldrsb1|cmd_is_ldrsh0|
                     cmd_is_ldrsh1|cmd_is_ldr0|cmd_is_ldr1) & (cmd[21]|~cmd[24])) |
-                (cmd_is_ldm & cmd_sum_m==5'b0 & cmd[21]) );
+                (cmd_is_ldm & cmd_sum_m==5'b0 & cmd[21] & ~basereg_in_list) );
 
 always @ ( cmd_is_mrs or cmd_is_dp0 or cmd_is_dp1 or cmd_is_dp2 or cmd_is_multl or cmd )
 if (cmd_is_mrs|(cmd_is_dp0|cmd_is_dp1|cmd_is_dp2)|cmd_is_multl)
