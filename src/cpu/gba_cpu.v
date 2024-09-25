@@ -1637,7 +1637,12 @@ else if ( cpu_en ) begin
     else if ( ldm_vld & ldm_num==4'he & ~ldm_usr & cpsr_m==5'b10010 )
 	    re_irq <= ldm_data;
 	else if ( cmd_ok & cmd_is_b & cmd[24] & cpsr_m==5'b10010 )
-	    re_irq <= {rf_b[31:1], cpsr_t};
+    begin
+        if (cmd_is_bll)
+            re_irq <= sum_rn_rm;                    // BLL: LR = PC + offset
+        else        
+	        re_irq <= {rf_b[31:1], cpsr_t};         // otherwise: LR = return address
+	end 
 	else if ( cmd_ok & to_vld  & to_num== 4'he & cpsr_m==5'b10010 )
 	    re_irq <= to_data;
 	else if ( go_vld & go_num==4'he & cpsr_m==5'b10010 )
