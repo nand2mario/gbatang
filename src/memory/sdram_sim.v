@@ -183,7 +183,7 @@ always @(posedge clk) begin
         // flash: read ID
         if (is_flash & f_mode == MODE_ID & {cpu_addr,2'b0} == 26'h204_0000) begin
             reg is1m;
-            is1m = config_backup_type == 2'd2;       // 0x1362 (Sanyo) for large chip, 0x1B32 (Pansonic) for small chip
+            is1m = config_backup_type == 3'd2;       // 0x1362 (Sanyo) for large chip, 0x1B32 (Pansonic) for small chip
             if (cpu_be == 4'b0001) cpu_rdata[cpu_port] <= is1m ? {4{8'h62}} : {4{8'h32}};
             if (cpu_be == 4'b0010) cpu_rdata[cpu_port] <= is1m ? {4{8'h13}} : {4{8'h1B}};
             $display("flash: read ID");

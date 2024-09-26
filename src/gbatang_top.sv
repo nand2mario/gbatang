@@ -283,7 +283,7 @@ wire        rv_mem_req_ack;
 wire        rv_mem_we;
 
 wire        sdram_busy;
-wire  [1:0] config_backup_type;
+wire  [2:0] config_backup_type;
 
 wire [16:0] dma_eepromcount;
 

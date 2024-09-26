@@ -983,9 +983,10 @@ int loadgba(int rom) {
                     //     detect = 0;
                     } else if (detect == 2) {
                         if ( (  w & 0xffffff) == 0x565f48 |             // 'H_V'
-                                w == 0x32313548 |                       // 'H512'
-                                w == 0x5F4D3148)                        // 'H1M_'
-                            gba_backup_type = GBA_BACKUP_FLASH;
+                                w == 0x32313548 )                       // 'H512'
+                            gba_backup_type = GBA_BACKUP_FLASH512K;
+                        else if (w == 0x5F4D3148)                       // 'H1M_'
+                            gba_backup_type = GBA_BACKUP_FLASH1M;
                         detect = 0;
                     } else if (detect == 3) {
                         if ((w & 0xffff) == 0x565F |                    // '_V'

@@ -189,7 +189,7 @@ always @(posedge clk) begin
     end else begin
         reg hi, flash_cmd_en;
         reg is_flash;
-        is_flash = config_backup_type == 2'd1 | config_backup_type == 2'd2;
+        is_flash = config_backup_type == 3'd1 | config_backup_type == 3'd2;
         hi = 0;
         // request goes to flash controller
         flash_cmd_en = 0;
@@ -275,7 +275,7 @@ always @(posedge clk) begin
 
                 if (f_mode == MODE_ID & addr_latch[0] == 26'h204_0000) begin
                     reg is1m;
-                    is1m = config_backup_type == 2'd2;       // 0x1362 (Sanyo) for large chip, 0x1B32 (Pansonic) for small chip
+                    is1m = config_backup_type == 3'd2;       // 0x1362 (Sanyo) for large chip, 0x1B32 (Pansonic) for small chip
                     if (ds_latch[0][0])      cpu_rdata[port[0]] <= is1m ? {4{8'h62}} : {4{8'h32}};
                     else if (ds_latch[0][1]) cpu_rdata[port[0]] <= is1m ? {4{8'h13}} : {4{8'h1B}};
                 end
