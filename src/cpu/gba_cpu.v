@@ -239,9 +239,9 @@ assign code = thumb_decoded_inst; //rom_data;
 
 assign code_is_b      = code[27:25]==3'b101;
 assign code_is_bx     = {code[27:23],code[20],code[7],code[4]}==8'b00010001;
-assign code_is_dp0    = code[27:25]==3'b0 & ~code[4] & (code[24:23]!=2'b10 | code[20]);	
-assign code_is_dp1    = code[27:25]==3'b0 & ~code[7] & code[4] & (code[24:23]!=2'b10 | code[20]);
-assign code_is_dp2    = code[27:25]==3'b001 & (code[24:23]!=2'b10 | code[20]);
+assign code_is_dp0    = code[27:25]==3'b0 & ~code[4] & (code[24:23]!=2'b10 | code[20]);	            // Op2 reg shifted by immediate
+assign code_is_dp1    = code[27:25]==3'b0 & ~code[7] & code[4] & (code[24:23]!=2'b10 | code[20]);   // Op2 reg shifted by reg
+assign code_is_dp2    = code[27:25]==3'b001 & (code[24:23]!=2'b10 | code[20]);                      // Op2 is immediate
 assign code_is_ldm    = code[27:25]==3'b100;        // this is LDM/STM
 assign code_is_ldr0   = code[27:25]==3'b010;
 assign code_is_ldr1   = code[27:25]==3'b011;
@@ -251,8 +251,8 @@ assign code_is_ldrsb0 = code[27:25]==3'b0 & code[7:4]==4'b1101 & ~code[22];
 assign code_is_ldrsb1 = code[27:25]==3'b0 & code[7:4]==4'b1101 & code[22];		
 assign code_is_ldrsh0 = code[27:25]==3'b0 & code[7:4]==4'b1111 & ~code[22];
 assign code_is_ldrsh1 = code[27:25]==3'b0 & code[7:4]==4'b1111 & code[22];
-assign code_is_mrs    = {code[27:23],code[21:20],code[7],code[4]}==9'b000100000;
-assign code_is_msr0   = {code[27:23],code[21:20],code[7],code[4]}==9'b000101000;
+assign code_is_mrs    = {code[27:23],code[21:20],code[7],code[4]}==9'b00010_0000;
+assign code_is_msr0   = {code[27:23],code[21:20],code[7],code[4]}==9'b00010_1000;
 assign code_is_msr1   = code[27:25]==3'b001 & code[24:23]==2'b10 & ~code[20];
 assign code_is_mult   = code[27:25]==3'b0 & code[7:4]==4'b1001 & code[24:23]==2'b00;
 assign code_is_multl  = code[27:25]==3'b0 & code[7:4]==4'b1001 & code[24:23]==2'b01;
@@ -266,7 +266,7 @@ if ( code[27:25]==3'b0 )
             if ( ~code[21] )
                 all_code = code[19:16]==4'hf & code[11:0] == 12'b0;
             else
-                all_code = code[18:17] == 2'b0 & code[15:12]==4'hf & code[11:4]==8'h0;
+                all_code = /*code[18:17] == 2'b0 &*/ code[15:12]==4'hf & code[11:4]==8'h0;  // MSR
         else
             all_code = code[24:23]!=2'b10 | code[20];
     else if ( ~code[7] )
