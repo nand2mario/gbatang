@@ -9,10 +9,9 @@
 //
 // 2. 32-bit interface for CPU, 16-bit interface for RISC-V iosys softcore.
 //
-// 3. The Flash/SRAM memory region implements the flash protocol if `flash_backup_en==1`. 
+// 3. The Flash/SRAM memory region implements the flash protocol if config_backup_type is 1 or 2. 
 //    It behaves just like the GBA flash backup memory, including the bank switching 
-//    behavior. If `flash_backup_en==0`, it is normal memory and thus equivalent to SRAM 
-//    backup memory.
+//    behavior. Otherwise, it is normal memory and thus equivalent to SRAM backup memory.
 //
 // We need to use both 32MB chips as the cartridge is already 32MB. CPU uses all banks of 
 // chip 0 (cartridge ROM) and bank 0 of chip 1 (EWRAM / backup).  RISC-V uses bank 1 of 
@@ -71,8 +70,8 @@ module sdram_gba
     input             clk,          // 67Mhz sdram clock
     input             mclk,         // 16Mhz main GBA clock
     input             resetn,
-    input             flash_backup_en,  // enable flash backup chip behavior for 26'h204_0000 ~ 26'h204_FFFF
-                                        // i.e. 2nd chip, bank 0, 256KB to 320KB
+    input       [2:0] config_backup_type, // backup chip behavior for 26'h204_0000 ~ 26'h204_FFFF
+                                    // 0: none, 1: 512Kbit flash, 2: 1Mbit flash, 3: SRAM
 
     // CPU access. cartridge ROM uses chip 0. EWRAM / cart RAM uses bank 0 of chip 1.
     // 32-bit interface, 2 or 4 cycle latency depending on `cpu_be` values.
@@ -189,10 +188,12 @@ always @(posedge clk) begin
         setup_ncs <= 0;
     end else begin
         reg hi, flash_cmd_en;
+        reg is_flash;
+        is_flash = config_backup_type == 2'd1 | config_backup_type == 2'd2;
         hi = 0;
         // request goes to flash controller
         flash_cmd_en = 0;
-        if (flash_backup_en & (cpu_wr & cpu_addr[25:16] == 10'h204 | flash == FLASH_ERASEALL | flash == FLASH_ERASESECT))
+        if (is_flash & (cpu_wr & cpu_addr[25:16] == 10'h204 | flash == FLASH_ERASEALL | flash == FLASH_ERASESECT))
             flash_cmd_en = 1;
         if (f_mode == MODE_WRITE) 
             flash_cmd_en = 0;
@@ -273,8 +274,10 @@ always @(posedge clk) begin
                     endcase
 
                 if (f_mode == MODE_ID & addr_latch[0] == 26'h204_0000) begin
-                    if (ds_latch[0][0]) cpu_rdata[port[0]] <= {4{8'h62}};
-                    else if (ds_latch[0][1]) cpu_rdata[port[0]] <= {4{8'h13}};
+                    reg is1m;
+                    is1m = config_backup_type == 2'd2;       // 0x1362 (Sanyo) for large chip, 0x1B32 (Pansonic) for small chip
+                    if (ds_latch[0][0])      cpu_rdata[port[0]] <= is1m ? {4{8'h62}} : {4{8'h32}};
+                    else if (ds_latch[0][1]) cpu_rdata[port[0]] <= is1m ? {4{8'h13}} : {4{8'h1B}};
                 end
 
                 if (hi | ds_latch[0][3:2] == 0)             // mark done after both halfwords
@@ -304,7 +307,7 @@ always @(posedge clk) begin
                 end else if (new_cpu) begin                     // new CPU request 
                     reg [25:2] cpu_addr_with_bank;              // patch flash bank
                     cpu_addr_with_bank = cpu_addr;
-                    if (flash_backup_en & cpu_addr[25:16] == 10'h204) begin
+                    if (is_flash & cpu_addr[25:16] == 10'h204) begin
                         cpu_addr_with_bank[16] = f_bank;
                         if (cpu_wr) f_mode <= MODE_NORMAL;      // clear flash byte write mode
                     end

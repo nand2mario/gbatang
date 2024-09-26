@@ -3,8 +3,7 @@ module sdram_sim
 (
     // Logic side interface
     input             clk,
-    input             flash_backup_en,  // enable flash backup chip behavior for 26'h204_0000 ~ 26'h204_FFFF
-                                        // i.e. 2nd chip, bank 0, 256KB to 320KB 
+    input       [2:0] config_backup_type,
 
     // CPU access. ROM (cartridge) uses chip 0. EWRAM uses bank 0 of chip 1.
     // 32-bit interface
@@ -41,14 +40,16 @@ localparam FLASH_BASE       = (32*1024*1024+256*1024)/4;
 
 always @(posedge clk) begin
     reg [25:2] f_cpu_addr;          // cpu address with flash bank offset applied
+    reg is_flash;
+    is_flash = config_backup_type == 3'd1 | config_backup_type == 3'd2;
     f_cpu_addr = cpu_addr;
-    if (flash_backup_en & cpu_addr[25:17] == 9'b10_0000_010 & f_bank)       // 0x204 & 0x205
+    if (is_flash & cpu_addr[25:17] == 9'b10_0000_010 & f_bank)       // 0x204 & 0x205
         f_cpu_addr[16] = 1'b1;
 
     cpu_ready <= 0;
     case (cycle)
     0: begin
-        if (flash_backup_en & cpu_wr & cpu_addr[25:16] == 10'h204) begin
+        if (is_flash & cpu_wr & cpu_addr[25:16] == 10'h204) begin
             // flash backup behavior
             reg [15:0] f_addr = {cpu_addr[15:2], 2'b0};
             reg [7:0] f_din;
@@ -180,9 +181,11 @@ always @(posedge clk) begin
         endcase
 
         // flash: read ID
-        if (flash_backup_en & f_mode == MODE_ID & {cpu_addr,2'b0} == 26'h204_0000) begin
-            if (cpu_be == 4'b0001) cpu_rdata[cpu_port] <= {4{8'h62}};       // Sanyo flash
-            if (cpu_be == 4'b0010) cpu_rdata[cpu_port] <= {4{8'h13}};
+        if (is_flash & f_mode == MODE_ID & {cpu_addr,2'b0} == 26'h204_0000) begin
+            reg is1m;
+            is1m = config_backup_type == 2'd2;       // 0x1362 (Sanyo) for large chip, 0x1B32 (Pansonic) for small chip
+            if (cpu_be == 4'b0001) cpu_rdata[cpu_port] <= is1m ? {4{8'h62}} : {4{8'h32}};
+            if (cpu_be == 4'b0010) cpu_rdata[cpu_port] <= is1m ? {4{8'h13}} : {4{8'h1B}};
             $display("flash: read ID");
         end
 

@@ -113,7 +113,7 @@ module gba_memory (
     input       [7:0]   loader_data  /* xsynthesis syn_keep=1 */, 
     input               loader_valid /* xsynthesis syn_keep=1 */,
     output reg          gbaon,          // GBA is turned on after loading goes from none-zero to zero
-    output              flash_backup_en,  // this cartridge is backed by flash save memory 
+    output reg  [2:0]   config_backup_type,   // 0: no backup, 1: 512Kbit, 2: 1Mbit, 3: SRAM, 4: EEPROM
 
     // GPU memory interface
     output     [13:0]   vram_lo_addr,
@@ -169,11 +169,14 @@ reg [7:0]   loader_buf[0:3];                        // byte-by-byte. bottleneck 
 reg [7:0]   loader_d;
 reg [27:0]  loader_addr;                            // region 8 and 9 for ROM, region E for cart RAM
 
-reg [2:0]   config_backup_type;                     // 0: none, 1: flash, 2: sram, 3: eeprom_4k, 4: eeprom_64k
-reg         config_flash_backup;                    // 1: flash (can only be written with command 0xa0), 0: sram (can be freely written). 
+localparam BACKUP_NONE = 3'd0;
+localparam BACKUP_FLASH512K = 3'd1;
+localparam BACKUP_FLASH1M = 3'd2;
+localparam BACKUP_SRAM = 3'd3;
+localparam BACKUP_EEPROM = 3'd4;
+
 reg         config_eeprom_type = 1;                 // 1: 64kbit eeprom, 0: 4kbit
 reg         active;
-assign      flash_backup_en = config_flash_backup;
 
 // these drive all bram-backed memory (iwram, bios, palette, vram, oam, eeprom)
 reg  [1:0]  bram_port;      // 1: ROM, 2: RAM, 3: DMA
@@ -573,7 +576,7 @@ always @(posedge clk) begin
             loader_addr[2:0] <= loader_addr[2:0] + 1;
             if (loader_addr[2:0] == 0) begin
                 config_backup_type <= loader_data;
-                config_flash_backup <= (loader_data == 8'h1);
+                // config_flash_backup <= (loader_data == BACKUP_FLASH512K | loader_data == BACKUP_FLASH1M);
                 $display("backup type=%d", loader_data);
                 // auto-detection works fine, so we don't need this
                 // if (loader_data == 8'd3)        
@@ -602,9 +605,9 @@ always @(posedge clk) begin
             loader_writing <= 0;
             loader_start <= 1;
             if (loading == 1) begin                     // reset backup settings on loading start
-                config_backup_type <= 0;
+                config_backup_type <= BACKUP_NONE;
                 config_eeprom_type <= 1;
-                config_flash_backup <= 0;
+                // config_flash_backup <= 0;
             end
         end
 
@@ -742,7 +745,9 @@ endfunction
 function isreadonly(input [3:0] region);
     case (region)
     4'h0,4'h8,4'h9,4'ha,4'hb,4'hc: isreadonly = 1;
-    4'he,4'hf:                     isreadonly = config_backup_type != 1 & config_backup_type != 2;
+    4'he,4'hf:                     isreadonly = config_backup_type != BACKUP_FLASH512K & 
+                                                config_backup_type != BACKUP_FLASH1M & 
+                                                config_backup_type != BACKUP_SRAM;
     default: isreadonly = 0;
     endcase
 endfunction

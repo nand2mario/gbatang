@@ -104,17 +104,17 @@ static void loading_step()
 }
 
 const int BACKUP_NONE = 0;
-const int BACKUP_FLASH = 1;
-const int BACKUP_SRAM = 2;
-const int BACKUP_EEPROM = 3;
-// const int BACKUP_EEPROM_64K = 4;
+const int BACKUP_FLASH512K = 1;
+const int BACKUP_FLASH1M = 2;
+const int BACKUP_SRAM = 3;
+const int BACKUP_EEPROM = 4;
 
 const char *backup_type_name(int t) {
 	if (t == 0) return "NONE";
-	if (t == 1) return "FLASH";
-	if (t == 2) return "SRAM";
-	if (t == 3) return "EEPROM";
-	if (t == 4) return "EEPROM_64K";
+	if (t == 1) return "FLASH512K";
+	if (t == 1) return "FLASH1M";
+	if (t == 3) return "SRAM";
+	if (t == 4) return "EEPROM";
 	return "UNKNOWN";
 } 
 
@@ -159,7 +159,7 @@ void gba_load(uint8_t *rom, int size, int backup_type)
 		do loading_step(); while (!posedge);
 
 		top->loader_do_valid = 1;
-		if (backup_type == BACKUP_SRAM | backup_type == BACKUP_FLASH)
+		if (backup_type == BACKUP_SRAM | backup_type == BACKUP_FLASH512K | backup_type == BACKUP_FLASH1M)
 			top->loader_do = 0xff;
 		else
 			top->loader_do = 0x00;
@@ -198,14 +198,12 @@ int detect_backup_type(uint8_t *rom, int size) {
 		char *p = (char *)rom+i;
 		if (strncmp(p, "EEPROM_V", 8) == 0)
 			return BACKUP_EEPROM;
-		// if (strncmp(p, "EEPROM_V12", 10) == 0)
-		// 	return BACKUP_EEPROM_64K;
 		if (strncmp(p, "FLASH_V", 7) == 0)
-			return BACKUP_FLASH;
+			return BACKUP_FLASH512K;
 		if (strncmp(p, "FLASH512_V", 10) == 0)
-			return BACKUP_FLASH;
+			return BACKUP_FLASH512K;
 		if (strncmp(p, "FLASH1M_V", 9) == 0)
-			return BACKUP_FLASH;
+			return BACKUP_FLASH1M;
 		if (strncmp(p, "SRAM_V", 6) == 0)
 			return BACKUP_SRAM;
 		if (strncmp(p, "SRAM_F_V", 8) == 0)

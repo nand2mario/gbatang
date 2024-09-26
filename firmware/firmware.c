@@ -35,11 +35,11 @@ uint16_t snes_bsram_crc16;
 uint32_t snes_backup_time;
 
 const int GBA_BACKUP_NONE = 0;
-const int GBA_BACKUP_FLASH = 1;
-const int GBA_BACKUP_SRAM = 2;
-const int GBA_BACKUP_EEPROM = 3;     // EEPROM with size auto-detected
-const int GBA_BACKUP_EEPROM_64K = 4;    // Most EEPROM games
-int gba_backup_type;       // 0: none, 1: . auto detected from rom content
+const int GBA_BACKUP_FLASH512K = 1;
+const int GBA_BACKUP_FLASH1M = 2;
+const int GBA_BACKUP_SRAM = 3;
+const int GBA_BACKUP_EEPROM = 4;     // EEPROM with size auto-detected
+int gba_backup_type;       // 0: none, 1: auto detected from rom content
 bool gba_bios_loaded;
 bool gba_missing_bios_warned;
 
@@ -1003,9 +1003,9 @@ int loadgba(int rom) {
             status("");
             printf("%d/%dK %s", total >> 10, size >> 10, 
                 gba_backup_type == GBA_BACKUP_SRAM ? "SRAM" : 
-                gba_backup_type == GBA_BACKUP_FLASH ? "Flash" :
+                gba_backup_type == GBA_BACKUP_FLASH512K ? "FLASH512K" :
+                gba_backup_type == GBA_BACKUP_FLASH1M ? "FLASH1M" :
                 gba_backup_type == GBA_BACKUP_EEPROM ? "EEPROM" :
-                gba_backup_type == GBA_BACKUP_EEPROM_64K ? "EEPROM_64K" :
                 "");
         }
     } while (br == 1024);
@@ -1013,8 +1013,11 @@ int loadgba(int rom) {
     DEBUG("loadgba: %d bytes rom sent. now initializing cartram\n", total);
 
     snes_ctrl(2);
+    int cartrom_data = 0;
+    if (gba_backup_type == GBA_BACKUP_SRAM | gba_backup_type == GBA_BACKUP_FLASH512K | gba_backup_type == GBA_BACKUP_FLASH1M)
+        cartrom_data = 0xffffffff;
     for (int i = 0; i < 128*1024/4; i++)
-        snes_data(0xffffffff);
+        snes_data(cartrom_data);
 
     DEBUG("loadgba: now configuring cartram type: %d\n", gba_backup_type);
 

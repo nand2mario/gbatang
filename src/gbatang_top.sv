@@ -283,7 +283,7 @@ wire        rv_mem_req_ack;
 wire        rv_mem_we;
 
 wire        sdram_busy;
-wire        flash_backup_en;
+wire  [1:0] config_backup_type;
 
 wire [16:0] dma_eepromcount;
 
@@ -306,7 +306,7 @@ gba_memory mem (
 
     // Loader interface
     .loading(loading), .loader_data(loader_do), .loader_valid(loader_do_valid),
-    .gbaon(gbaon), .flash_backup_en(flash_backup_en),
+    .gbaon(gbaon), .config_backup_type(config_backup_type),
 
     // Interface to GPU to access special memory like VRAM, OAMRAM, PALETTE
     .vram_lo_addr(vram_lo_addr), .vram_lo_din(vram_lo_din), .vram_lo_dout(vram_lo_dout), 
@@ -336,7 +336,7 @@ sdram_gba sdram (
 	.cpu_addr(cpu_mem_addr), .cpu_wdata(cpu_mem_wdata), .cpu_rdata(cpu_mem_rdata), 
     .cpu_rd(cpu_mem_rd), .cpu_wr(cpu_mem_wr), .cpu_be(cpu_mem_be),
     .cpu_ready(cpu_mem_ready), .cpu_port(cpu_mem_port),
-    .flash_backup_en(flash_backup_en),
+    .config_backup_type(config_backup_type),
 	
     .rv_addr(rv_mem_addr), .rv_din(rv_mem_din), .rv_ds(rv_mem_ds), 
     .rv_dout(rv_mem_dout), .rv_req(rv_mem_req), .rv_req_ack(rv_mem_req_ack), 
@@ -361,7 +361,7 @@ sdram_sim sdram (
 	.cpu_addr(cpu_mem_addr), .cpu_wdata(cpu_mem_wdata), .cpu_rdata(cpu_mem_rdata), 
     .cpu_rd(cpu_mem_rd), .cpu_wr(cpu_mem_wr), .cpu_be(cpu_mem_be),
     .cpu_ready(cpu_mem_ready), .cpu_port(cpu_mem_port), 
-    .flash_backup_en(flash_backup_en)
+    .config_backup_type(config_backup_type)
 );
 
 `endif
