@@ -132,7 +132,7 @@ always @(posedge clk100) begin
             reg_dout_en <= 1;
             casez (gb_bus_adr) 
             Reg_SAD.Adr:
-                reg_dout <= 32'hDEADDEAD; // SAD;
+                reg_dout <= 32'b0; // 32'hDEADDEAD; // SAD;
             Reg_DAD.Adr:
                 reg_dout <= 32'hDEADDEAD; // DAD;
             Reg_CNT_L.Adr:
