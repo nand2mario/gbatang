@@ -298,7 +298,8 @@ if ( code[27:25]==3'b0 )
 		    all_code = 1'b0;
 else if ( code[27:25]==3'b001 )
     if ( (code[24:23]==2'b10) & ~code[20] )
-        all_code = code[21] & code[18:17]==2'b0 & code[15:12]==4'hf;
+        all_code = code[21] & code[18:17]==2'b0 & code[15:12]==4'hf |       // MSR
+                   code[22:21] == 2'b0;                                     // Tak and power of Juju: 0x030042A0
     else
 	    all_code = code[24:23]!=2'b10 | code[20];
 else if ( code[27:25]==3'b010 )

@@ -14,7 +14,7 @@ SRCS=$D/gbatang_top.sv $D/cpu/gba_cpu.v $D/cpu/gba_cpu_thumbdecoder.v \
 DEPS=
 INCLUDES=-I$D -I$D/arm -I$D/common
 
-CFLAGS_SDL=$(shell sdl2-config --cflags) -g -O2
+CFLAGS_SDL=$(shell sdl2-config --cflags) -g -O3
 LIBS_SDL=$(shell sdl2-config --libs) -g
 
 .PHONY: build sim verilate clean gtkwave audio
@@ -27,7 +27,8 @@ verilate: ./obj_dir/V$N.cpp
 	@echo
 	@echo "### VERILATE ####"
 	mkdir -p obj_dir
-	verilator --top-module $N --timing --trace-fst -Wno-WIDTH -Wno-PINMISSING -Wno-UNOPTFLAT -cc --exe -CFLAGS "$(CFLAGS_SDL)" -LDFLAGS "$(LIBS_SDL)" $(INCLUDES) $(SRCS) sim_main.cpp
+	verilator --top-module $N --trace-fst -Wno-WIDTH -Wno-PINMISSING -Wno-UNOPTFLAT -cc --exe -CFLAGS "$(CFLAGS_SDL)" -LDFLAGS "$(LIBS_SDL)" $(INCLUDES) $(SRCS) sim_main.cpp
+#	verilator --top-module $N --timing --trace-fst -Wno-WIDTH -Wno-PINMISSING -Wno-UNOPTFLAT -cc --exe -CFLAGS "$(CFLAGS_SDL)" -LDFLAGS "$(LIBS_SDL)" $(INCLUDES) $(SRCS) sim_main.cpp
 
 ./obj_dir/V$N: verilate
 	@echo

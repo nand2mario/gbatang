@@ -763,5 +763,15 @@ function [25:2] tosdram(input [27:0] addr);
 endfunction
 
 
+// memory watch points
+// always @(posedge clk) begin
+//     if (ce) begin
+//         if (cpu_en & ram_cen & ram_wen) begin
+//             if (ram_addr == 32'h0300_09C4 | ram_addr == 32'h0300_0BE0)
+//                 $display("WR [%h] <= %h (be=%h)", ram_addr, ram_wdata, ram_be);
+//         end
+//     end
+// end
+
 endmodule
 `undef pproc_bus_gba
