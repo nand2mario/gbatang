@@ -36,7 +36,7 @@ output reg      irp_dma;
                                    
 output          dma_on;                 // Pause CPU because DMA is running
 input           cpu_preemptable;        // CPU is preemptible and DMA can start
-input           allow_on;               // when DMA is running, allow read/write to happen
+input           allow_on /* synthesis syn_keep=1 */;               // when DMA is running, allow read/write to happen
 input           lowprio_pending;        // 1: any of lower priority DMA is running
                                    
 input           sound_dma_req;          // DMA trigger signals
@@ -150,8 +150,9 @@ always @(posedge clk100) begin
     end
 end
 
+reg pre_enable;
 assign is_idle = state == IDLE;
-assign dma_on = CNT_H_DMA_Enable_written & ~CNT_H_DMA_Enable_written_r | dmaon;     // 1: pause cpu because of DMA.
+assign dma_on = dmaon | pre_enable;     // 1: pause cpu because of DMA.
 assign dma_eepromcount = fullcount;
 
 // assign dma_bus_ena = running && (state == READING || state == WRITING);
@@ -194,6 +195,8 @@ always @(posedge clk100) begin
         waitTicks          <= 0;
         state              <= IDLE;
     end else if (ce) begin
+        reg dma_enable_written;
+        reg dma_enable;
         irp_dma       <= 0;
         
         // dma_bus_ena   <= 0;
@@ -208,6 +211,11 @@ always @(posedge clk100) begin
         dma_cycles_adrup <= 0;
         CNT_H_DMA_Enable_written_r <= CNT_H_DMA_Enable_written;
 
+        // make sure dma_on is turned on immediate after DMAxCNT is written to
+        pre_enable = 0;
+        if (gb_bus_ena & ~gb_bus_rnw & gb_bus_adr == Reg_CNT_H_DMA_Enable.Adr & gb_bus_be[3] & gb_bus_din[31]) 
+            pre_enable <= 1;
+
         // DMA init
         if (CNT_H_DMA_Enable_written) begin
         
@@ -219,7 +227,7 @@ always @(posedge clk100) begin
                 dmaon   <= 0;
             end;
         
-            if (!enable && CNT_H_DMA_Enable) begin          // posedge enable
+            if (~enable & CNT_H_DMA_Enable) begin          // posedge enable
                 // DRQ not implemented! Reg_CNT_H_Game_Pak_DRQ                
                 dest_addr_control   <= CNT_H_Dest_Addr_Control;
                 source_addr_control <= CNT_H_Source_Adr_Control;
@@ -262,10 +270,12 @@ always @(posedge clk100) begin
                 if (CNT_H_DMA_start_timing == 0)
                     dmaon <= 1;
             end
-        end
+    
+        end 
         
         // DMA checkrun
-        if (enable && ce) begin 
+        if (enable && ce && CNT_H_DMA_Enable) begin     // CNT_H_DMA_Enable is necessary to stop DMA when 0 is written to it
+        
             if (waiting) begin
                 if (start_timing == 0 ||
                 (start_timing == 1 && vblank_trigger) ||

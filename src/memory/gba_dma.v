@@ -21,7 +21,7 @@ module gba_dma(clk100, reset, ce, gb_bus_din, gb_bus_dout, gb_bus_adr, gb_bus_rn
     output [3:0]  irp_dma;
     output [31:0] lastread_dma;         // last read value from dma
     
-    output        dma_on;               // at least one of DMA is on
+    output        dma_on  /* xsynthesis syn_keep=1 */;               // at least one of DMA is on
     input         cpu_preemptable;      // CPU is idle and DMA is allowed
     input         do_step;              // enable execution
     // output        dma_pause;            // CPU needs to be paused for DMA
@@ -41,9 +41,9 @@ module gba_dma(clk100, reset, ce, gb_bus_din, gb_bus_dout, gb_bus_adr, gb_bus_rn
     
     output [16:0] dma_eepromcount;      // DMA3 transfer count for EEPROM size detection
     
-    output [27:0] dma_bus_Adr;          // DMA address
-    output        dma_bus_rnw;          // 1: read, 0: write
-    output        dma_bus_ena;          // 1: DMA bus active
+    output [27:0] dma_bus_Adr  /* xsynthesis syn_keep=1 */;          // DMA address
+    output        dma_bus_rnw  /* xsynthesis syn_keep=1 */;          // 1: read, 0: write
+    output        dma_bus_ena  /* xsynthesis syn_keep=1 */;          // 1: DMA bus active
     output [1:0]  dma_bus_acc;          // 00: byte, 01: halfword, 10: word
     output [31:0] dma_bus_dout;         // data to be written
     input [31:0]  dma_bus_din;          // read result

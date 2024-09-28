@@ -62,19 +62,19 @@ module gba_memory (
     input               ce,
 
     // CPU interface
-    input               rom_en /* xxsynthesis syn_keep=1 */,
-    input      [31:0]   rom_addr /* xxsynthesis syn_keep=1 */,       // PC address, word aligned for ARM mode, half-word aligned for thumb mode
+    input               rom_en    /* xxsynthesis syn_keep=1 */,
+    input      [31:0]   rom_addr  /* xxsynthesis syn_keep=1 */,       // PC address, word aligned for ARM mode, half-word aligned for thumb mode
     input               thumb,          // 1: thumb (16-bit) mode for this rom load
-    output reg [31:0]   rom_data /* xxsynthesis syn_keep=1 */,
+    output reg [31:0]   rom_data  /* xsynthesis syn_keep=1 */,
 
-    input               ram_cen /* xxsynthesis syn_keep=1 */,        // cpu ram interface, also used for DMA
-    input               ram_wen /* xxsynthesis syn_keep=1 */,
-    input      [31:0]   ram_addr /* xxsynthesis syn_keep=1 */,       // last two bits ignored because we have ram_be
-    input      [31:0]   ram_wdata /* xxsynthesis syn_keep=1 */,
-    input       [3:0]   ram_be /* xxsynthesis syn_keep=1 */,
-    output reg [31:0]   ram_rdata /* xxsynthesis syn_keep=1 */,
+    input               ram_cen   /* xsynthesis syn_keep=1 */,        // cpu ram interface, also used for DMA
+    input               ram_wen   /* xsynthesis syn_keep=1 */,
+    input      [31:0]   ram_addr  /* xsynthesis syn_keep=1 */,       // last two bits ignored because we have ram_be
+    input      [31:0]   ram_wdata /* xsynthesis syn_keep=1 */,
+    input       [3:0]   ram_be    /* xsynthesis syn_keep=1 */,
+    output reg [31:0]   ram_rdata /* xsynthesis syn_keep=1 */,
 
-    output reg          cpu_en /* xxsynthesis syn_keep=1 */,         // rom_data and ram_rdata is available NEXT cycle and there's no ongoing DMA
+    output reg          cpu_en    /* xsynthesis syn_keep=1 */,         // rom_data and ram_rdata is available NEXT cycle and there's no ongoing DMA
 
     // DMA interface
     input               dma_on,         // DMA is accessing memory, save state and pause CPU
@@ -88,9 +88,9 @@ module gba_memory (
     input      [16:0]   dma_eepromcount,    // for eeprom address length detection
 
     // MMIO register bus to various components
-    output     [31:0]   gb_bus_din /* xsynthesis syn_keep=1 */, 
+    output     [31:0]   gb_bus_din  /* xsynthesis syn_keep=1 */, 
     input      [31:0]   gb_bus_dout /* xsynthesis syn_keep=1 */, 
-    output     [27:0]   gb_bus_adr /* xsynthesis syn_keep=1 */, 
+    output     [27:0]   gb_bus_adr  /* xsynthesis syn_keep=1 */, 
     output              gb_bus_rnw, 
     output              gb_bus_ena, 
     output              gb_bus_done, 
