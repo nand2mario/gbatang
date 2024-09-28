@@ -5,9 +5,9 @@
 
 This is a Game Boy Advance FPGA core for Sipeed [Tang Mega 138K](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k.html), [Mega 138K Pro](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k-pro.html) and the upcoming handheld TangConsole 60K. 
 
-The core outputs 720p HDMI video, accepts DS2 controller input, and supports all ROM sizes (up to 32MB). An open source BIOS is used so it can be used out of the box. ROMs are loaded from the SD card through a convenient menu system.  This is still a word-in-progress and some games do not work yet. The following are games that are verified to work,
+The core outputs 720p HDMI video, accepts DS2 controller input, and supports all ROM sizes (up to 32MB). An open source BIOS is used so it can be used out of the box. ROMs are loaded from the SD card through a convenient menu system.  This is still a work in progress and compatibility is quickly improving. Currently 85 out of top 100 games work. The following are games that are verified to work,
 
-* Super Mario Advance and 2, 3
+* Super Mario Advance, and 2, 3, 4
 * F-ZERO Maximum Velocity
 * Donkey Kong Country
 * Bomberman Tournament
