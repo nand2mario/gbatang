@@ -212,7 +212,7 @@ always @(posedge clk100) begin
         CNT_H_DMA_Enable_written_r <= CNT_H_DMA_Enable_written;
 
         // make sure dma_on is turned on immediate after DMAxCNT is written to
-        pre_enable = 0;
+        pre_enable <= 0;
         if (gb_bus_ena & ~gb_bus_rnw & gb_bus_adr == Reg_CNT_H_DMA_Enable.Adr & gb_bus_be[3] & gb_bus_din[31]) 
             pre_enable <= 1;
 
