@@ -27,6 +27,7 @@ module gba_joypad (
 );
 
 `include "pproc_bus_gba.sv"
+`include "preg_gba_serial.sv"
 
 //    range 0x130 .. 0x133
 //  (                              adr   upper lower size default accesstype)                                     
@@ -59,6 +60,10 @@ always @(posedge mclk) begin
         case (gb_bus_adr)
         KEYINPUT.Adr:    // 130
             reg_dout <= {REG_KEYCNT, REG_KEYINPUT};
+
+        // dummy read for RCNT / IR
+        RCNT.Adr:        // 134
+            reg_dout <= 32'h0000_8000;
 
         default: reg_dout_en <= 0;
         endcase
