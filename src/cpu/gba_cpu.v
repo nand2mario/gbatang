@@ -826,7 +826,8 @@ if ( rst )
     irq_flag <= 1'b0;
 else if ( cpu_en )
     // if ( irq & (~thumb | ~thumb_bl_fix))        // do not interrupt thumb BL
-    if (irq)
+    // if (irq)
+    if (irq & ~hold_en)         // nand2mario: do not interrupt LDM or SWP (doom)
         irq_flag <= 1'b1;
     else if ( cmd_flag )
         irq_flag <= 1'b0;
