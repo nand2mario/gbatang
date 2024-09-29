@@ -48,6 +48,7 @@ The project started as a port of the MiSTer GBA core to Tang FPGAs in June 2024.
 ## Documentation
 
 * [Building GBATang part 1 - overall design and CPU](https://nand2mario.github.io/posts/2024/gbatang_part_1/)
+* [Building GBATang part 2 - memory system and others](https://nand2mario.github.io/posts/2024/gbatang_part_2/)
 
 ## Acknowledgements
 * [MiSTer GBA core](https://github.com/MiSTer-devel/GBA_MiSTer) by [Robert Peip](https://github.com/RobertPeip)
