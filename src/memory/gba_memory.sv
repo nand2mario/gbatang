@@ -108,6 +108,13 @@ module gba_memory (
     output reg [3:0]    sdram_be,
     input               sdram_ready,
 
+    // EEPROM for access from RV
+    input               eeprom_valid,
+    input       [3:0]   eeprom_wstrb,
+    input      [12:2]   eeprom_addr,
+    output     [31:0]   eeprom_rdata,
+    input      [31:0]   eeprom_wdata,
+
     // Loader interface
     input       [2:0]   loading      /* xsynthesis syn_keep=1 */,     // 0: off, 1: ROM, 2: Cart RAM, 3: Config, 4: BIOS
     input       [7:0]   loader_data  /* xsynthesis syn_keep=1 */, 
@@ -718,7 +725,10 @@ gba_eeprom eeprom (
     .clk(clk), .rst(~resetn), .cs(sel_eeprom), .model(config_eeprom_type),
     .valid(bram_valid), .write(bram_wr), .ready(),
     .din(bram_wdata[0]), .dout(rdata_eeprom),
-    .dma_eepromcount(dma_eepromcount)
+    .dma_eepromcount(dma_eepromcount),
+
+    .rv_valid(eeprom_valid), .rv_wstrb(eeprom_wstrb), .rv_addr(eeprom_addr), .rv_rdata(eeprom_rdata), 
+    .rv_wdata(eeprom_wdata)
 );
 
 //////////////////////////////////////////////

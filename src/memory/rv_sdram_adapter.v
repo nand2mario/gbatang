@@ -2,20 +2,28 @@
 module rv_sdram_adapter (
     input clk,
     input resetn,
+    input       [2:0] config_backup_type,       // EEPROM enabled when config_backup_type == 4
 
-    input rv_valid ,
-    input [22:0] rv_addr ,
-    input [31:0] rv_wdata ,
-    input [3:0] rv_wstrb ,
-    output reg rv_ready ,            // 1: rv_rdata is available now
-    output [31:0] rv_rdata ,
+    input rv_valid,
+    input [22:0] rv_addr,
+    input [31:0] rv_wdata,
+    input [3:0] rv_wstrb,
+    output reg rv_ready,            // 1: rv_rdata is available now
+    output [31:0] rv_rdata,
 
-    output reg [22:1]   mem_addr ,
-    output reg          mem_req ,
-    output reg [1:0]    mem_ds ,
-    output reg [15:0]   mem_din ,
-    output reg          mem_we ,
-    input               mem_req_ack ,
+    // RV may access eeprom for save persistence
+    output              eeprom_valid,
+    output      [3:0]   eeprom_wstrb,
+    output     [12:2]   eeprom_addr,
+    input      [31:0]   eeprom_rdata,
+    output     [31:0]   eeprom_wdata,
+
+    output reg [22:1]   mem_addr,
+    output reg          mem_req,
+    output reg [1:0]    mem_ds,
+    output reg [15:0]   mem_din,
+    output reg          mem_we,
+    input               mem_req_ack,
     input [15:0]        mem_dout 
 );
 
@@ -30,7 +38,13 @@ reg [2:0] rvst ;
 reg rv_valid_r, rv_word;
 reg [15:0] mem_dout0;
 reg mem_req_r;
-assign rv_rdata = {mem_dout, mem_dout0};
+wire eeprom_en = rv_addr[22:20] == 3'd7;
+assign rv_rdata = eeprom_en ? eeprom_rdata : {mem_dout, mem_dout0};
+
+assign eeprom_valid = rv_valid & eeprom_en;
+assign eeprom_addr = rv_addr[12:2];
+assign eeprom_wstrb = rv_wstrb;
+assign eeprom_wdata = rv_wdata;
 
 always @* begin
     reg w;
@@ -59,8 +73,13 @@ always @(posedge clk) begin            // RV
 
         case (rvst)
         RV_IDLE_REQ0: if (rv_valid) begin       // issue request 0
-            rv_word <= rv_wstrb[3:2] != 2'b0 & rv_wstrb[1:0] == 2'b0;
-            rvst <= RV_WAIT0;
+            if (config_backup_type == 3'd4 && rv_addr[22:20] == 3'd7) begin
+                rv_ready <= 1;
+            end else begin
+                eeprom_en <= 0;
+                rv_word <= rv_wstrb[3:2] != 2'b0 & rv_wstrb[1:0] == 2'b0;
+                rvst <= RV_WAIT0;        
+            end
         end
 
         RV_WAIT0: begin                    // wait for request 0 ack and issue request 1

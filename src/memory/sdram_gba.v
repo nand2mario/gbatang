@@ -13,6 +13,8 @@
 //    It behaves just like the GBA flash backup memory, including the bank switching 
 //    behavior. Otherwise, it is normal memory and thus equivalent to SRAM backup memory.
 //
+// 4. RV can access Flash/SRAM/EEPROM for save persistence starting from 0x700000 (max 128KB). 
+//
 // We need to use both 32MB chips as the cartridge is already 32MB. CPU uses all banks of 
 // chip 0 (cartridge ROM) and bank 0 of chip 1 (EWRAM / backup).  RISC-V uses bank 1 of 
 // chip 1.
@@ -71,7 +73,7 @@ module sdram_gba
     input             mclk,         // 16Mhz main GBA clock
     input             resetn,
     input       [2:0] config_backup_type, // backup chip behavior for 26'h204_0000 ~ 26'h204_FFFF
-                                    // 0: none, 1: 512Kbit flash, 2: 1Mbit flash, 3: SRAM
+                                    // 0: none, 1: 512Kbit flash, 2: 1Mbit flash, 3: SRAM, 4:EEPROM
 
     // CPU access. cartridge ROM uses chip 0. EWRAM / cart RAM uses bank 0 of chip 1.
     // 32-bit interface, 2 or 4 cycle latency depending on `cpu_be` values.

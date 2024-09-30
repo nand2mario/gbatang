@@ -29,8 +29,8 @@ bool option_backup_bsram = false;
 
 bool core_running;
 
-int snes_ramsize;
-bool snes_backup_valid;		// whether it is okay to save
+int core_backup_size;
+bool core_backup_valid;		// whether it is okay to save
 char core_backup_name[256];
 uint16_t snes_bsram_crc16;
 uint32_t core_backup_time;
@@ -790,10 +790,10 @@ int loadsnes(int rom) {
     } while (br == 1024);
 
     // load BSRAM backup
-    snes_ramsize = ram_size == 0 ? 0 : ((1 << ram_size) << 10);
-    if (snes_ramsize > 0)
-        memset((uint8_t *)0x700000, 0, snes_ramsize);		// clear BSRAM
-    backup_load(core_backup_name, snes_ramsize);
+    core_backup_size = ram_size == 0 ? 0 : ((1 << ram_size) << 10);
+    if (core_backup_size > 0)
+        memset((uint8_t *)0x700000, 0, core_backup_size);		// clear BSRAM
+    backup_load(core_backup_name, core_backup_size);
 
     status("Success");
     core_running = true;
@@ -927,6 +927,10 @@ int loadgba(int rom) {
         status("Only .gba supported");
         goto loadgba_end;
     }
+    // core_backup_name = <base>.srm
+    int base_len = p-file_names[rom];
+    strncpy(core_backup_name, file_names[rom], base_len);
+    strcpy(core_backup_name+base_len, ".srm");
 
     // initiaze sd again to be sure
     if (sd_init() != 0) return 99;
@@ -1014,12 +1018,22 @@ int loadgba(int rom) {
 
     DEBUG("loadgba: %d bytes rom sent. now initializing cartram\n", total);
 
-    core_ctrl(2);
-    int cartrom_data = 0;
-    if (gba_backup_type == GBA_BACKUP_SRAM || gba_backup_type == GBA_BACKUP_FLASH512K || gba_backup_type == GBA_BACKUP_FLASH1M)
-        cartrom_data = 0xffffffff;
-    for (int i = 0; i < 128*1024/4; i++)
-        core_data(cartrom_data);
+    // core_ctrl(2);
+    // int cartrom_data = 0;
+    // if (gba_backup_type == GBA_BACKUP_SRAM || gba_backup_type == GBA_BACKUP_FLASH512K || gba_backup_type == GBA_BACKUP_FLASH1M)
+    //     cartrom_data = 0xffffffff;
+    // for (int i = 0; i < 128*1024/4; i++)
+    //     core_data(cartrom_data);
+    if (gba_backup_type != GBA_BACKUP_NONE) {
+        if (gba_backup_type == GBA_BACKUP_FLASH1M) 
+            core_backup_size = 128*1024;
+        else if (gba_backup_type == GBA_BACKUP_EEPROM)
+            core_backup_size = 8*1024;
+        else
+            core_backup_size = 64*1024;    
+        memset((uint8_t *)0x700000, 0xff, core_backup_size);		// clear backup memory
+    }
+    backup_load(core_backup_name, core_backup_size);
 
     DEBUG("loadgba: now configuring cartram type: %d\n", gba_backup_type);
 
@@ -1041,7 +1055,7 @@ loadgba_end:
 }
 
 void backup_load(char *name, int size) {
-    snes_backup_valid = false;
+    core_backup_valid = false;
     if (!option_backup_bsram || size == 0) return;
     char path[266] = "/saves/";
     FILINFO fno;
@@ -1055,11 +1069,11 @@ void backup_load(char *name, int size) {
         }
     }
     strcat(path, core_backup_name);
-    uart_printf("Loading bsram from: %s\n", core_backup_name);
+    uart_printf("Loading save file from: %s\n", core_backup_name);
     FIL f;
     if (f_open(&f, path, FA_READ) != FR_OK) {
-        snes_backup_valid = true;					// new save file, mark as valid
-        uart_printf("Cannot open bsram file, assuming new\n");
+        core_backup_valid = true;					// new save file, mark as valid
+        uart_printf("Cannot open save file, assuming new\n");
         goto backup_load_crc;
     }
     uint8_t *p = bsram;	
@@ -1071,10 +1085,10 @@ void backup_load(char *name, int size) {
         p += br;
         load += br;
     }
-    snes_backup_valid = true;
+    core_backup_valid = true;
     f_close(&f);
     int crc = gen_crc16(bsram, size);
-    uart_printf("Bsram backup loaded %d bytes CRC=%x.\n", load, crc);
+    uart_printf("Save file loaded %d bytes CRC=%x.\n", load, crc);
 
 backup_load_crc:
     snes_bsram_crc16 = gen_crc16(bsram, size);
@@ -1084,7 +1098,7 @@ backup_load_crc:
 
 // return 0: successfully saved, 1: BSRAM unchanged, 2: file write failure
 int backup_save(char *name, int size) {
-    if (!option_backup_bsram || !snes_backup_valid || size == 0) return 1;
+    if (!option_backup_bsram || !core_backup_valid || size == 0) return 1;
     char path[266] = "/saves/";
     FIL f;
     uint8_t *bsram = (uint8_t *)0x700000;		// directly read from BSRAM
@@ -1125,17 +1139,18 @@ void backup_process() {
         return;
     int size = 0;
     if (CORE_ID == CORE_GBA) {
-        if (gba_backup_type != GBA_BACKUP_FLASH512K && gba_backup_type != GBA_BACKUP_FLASH1M && 
-                gba_backup_type != GBA_BACKUP_SRAM )
+        if (gba_backup_type == GBA_BACKUP_NONE)
             return;
         if (gba_backup_type == GBA_BACKUP_FLASH1M) 
             size = 128*1024;
+        else if (gba_backup_type == GBA_BACKUP_EEPROM)
+            size = 8*1024;
         else
             size = 64*1024;
     } else if (CORE_ID == CORE_SNES) {
-        if (!option_backup_bsram || snes_ramsize == 0)
+        if (!option_backup_bsram || core_backup_size == 0)
             return;
-        size = snes_ramsize;
+        size = core_backup_size;
     } else
         return;
     int t = time_millis();
