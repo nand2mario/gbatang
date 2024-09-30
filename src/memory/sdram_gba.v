@@ -78,7 +78,7 @@ module sdram_gba
     input             cpu_rd,       // pulse for read request
     input             cpu_wr,       // pulse for write request
 	input      [25:2] cpu_addr,     // [25] is chip select, [24:2] is 32-bit word address
-                                    // Cartridge: 0 - 32MB, EWRAM: 32MB - 32MB+256KB, CartRAM: 32MB+256KB - 32MB+320KB
+                                    // Cartridge: 0 - 32MB, EWRAM: 32MB - 32MB+256KB, CartRAM: 32MB+256KB - 32MB+384KB
 	input      [31:0] cpu_wdata,
 	input      [1:0]  cpu_port,     // put data in cpu_dout[cpu_port], none-zero
     output reg [31:0] cpu_rdata [1:3],// 3 output buffers
@@ -88,6 +88,7 @@ module sdram_gba
 
     // RISC-V softcore uses bank 1 of chip 1. 
     // 16-bit interface, 2 or 3 cycle latency as it has lower priority.
+    // top 1MB is mapped to cart RAM for read and write (max 128KB, config_backup_type specifies type)
     input      [22:1] rv_addr,      // 8MB RV memory space
     input      [15:0] rv_din,       // 16-bit accesses
     input      [1:0]  rv_ds,
@@ -337,15 +338,21 @@ always @(posedge clk) begin
                     end
                 end else if (new_rv) begin                      // new RV request, with lower priority
                     port[1] <= 1;
-                    addr_latch[1] <= { 3'b101, rv_addr, 1'b0};  // chip 1 bank 1
+
+                    cmd <= {1'b1, CMD_BankActivate};            // uses chip 1
+                    if (rv_addr[22:20] == 3'd7) begin           // cart RAM access
+                        addr_latch[1] <= { 8'b1000_0001, rv_addr[17:1], 1'b0};        // 256KB total cart RAM
+                        SDRAM_BA <= 2'b00;
+                        a <= {5'b0_0001, rv[17:10]};
+                    end else begin                              // normal RV memory
+                        addr_latch[1] <= { 3'b101, rv_addr, 1'b0};
+                        SDRAM_BA <= 2'b01;         
+                        a <= rv_addr[22:10];
+                    end
                     din_latch[1] <= rv_din;
                     we_latch[1] <= rv_we;
                     oe_latch[1] <= ~rv_we;
                     ds_latch[1] <= {rv_ds,rv_ds};
-
-                    cmd <= {1'b1, CMD_BankActivate};            // uses chip 1
-                    a <= rv_addr[22:10];
-                    SDRAM_BA <= 2'b01;                          // chip 1 bank 1
 
                     rv_req_ack <= rv_req; 
                 end 
