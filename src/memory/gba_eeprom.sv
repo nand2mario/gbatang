@@ -43,12 +43,12 @@ module gba_eeprom(
     input din,
     output dout,
 
-    // 16-bit interface for RV access
-    input rv_valid,
-    input [3:0] rv_wstrb,
-    input [12:2] rv_addr,       
-    input [31:0] rv_wdata,
-    output reg [31:0] rv_rdata
+    // 8-bit interface for RV access
+    input rv_rd,
+    input rv_wr,
+    input [12:0] rv_addr,       
+    input [7:0] rv_wdata,
+    output [7:0] rv_rdata
 );
 
 assign ready = valid;   // immediately ready
@@ -67,9 +67,12 @@ assign dout = out1 ? 1'b1 : mem_dout;
 
 `ifndef VERILATOR
 mem_eeprom m_eeprom (
-    .clk(clk), .ce(1'b1), .reset(rst),
-    .ad(fulladdr[15:0]), .wre(mem_write), .oce(1'b1),
-    .dout(mem_dout), .din(mem_din)
+    .clka(clk), .cea(1'b1), .reseta(rst),
+    .ada(fulladdr[15:0]), .wrea(mem_write), .ocea(1'b1),
+    .douta(mem_dout), .dina(mem_din),
+    .clkb(clk), .ceb(1'b1), .resetb(rst),
+    .adb(rv_addr), .wreb(rv_wr), .oceb(1'b1),
+    .doutb(rv_rdata), .dinb(rv_wdata)
 );
 `else
 reg [64*1024-1:0] mem;  // 64Kbits of memory, 4 BRAM blocks
@@ -122,21 +125,6 @@ always @(posedge clk) begin
                     state <= BIT2;
                     out1 <= 0;
                 end
-
-                // RV access
-                if (rv_valid) begin
-                    if (rv_wstrb == 4'd0)
-                        rv_rdata <= mem[{rv_addr, 5'b0} +: 32];
-                    else case (rv_wstrb)
-                        4'b0001: mem[{rv_addr, 5'b00000} +: 8] <= rv_wdata[7:0];
-                        4'b0010: mem[{rv_addr, 5'b01000} +: 8] <= rv_wdata[15:8];
-                        4'b0100: mem[{rv_addr, 5'b10000} +: 8] <= rv_wdata[23:16];
-                        4'b1000: mem[{rv_addr, 5'b11000} +: 8] <= rv_wdata[31:24];
-                        4'b0011: mem[{rv_addr, 5'b00000} +: 16] <= rv_wdata[15:0];
-                        4'b1100: mem[{rv_addr, 5'b10000} +: 16] <= rv_wdata[31:16];
-                        default: mem[{rv_addr, 5'b00000} +: 32] <= rv_wdata;
-                    endcase
-                end 
             end
             
             BIT2: if (write) begin

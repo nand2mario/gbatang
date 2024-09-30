@@ -4,19 +4,19 @@ module rv_sdram_adapter (
     input resetn,
     input       [2:0] config_backup_type,       // EEPROM enabled when config_backup_type == 4
 
-    input rv_valid,
-    input [22:0] rv_addr,
-    input [31:0] rv_wdata,
-    input [3:0] rv_wstrb,
-    output reg rv_ready,            // 1: rv_rdata is available now
-    output [31:0] rv_rdata,
+    input rv_valid        /* synthesis syn_keep=1 */,
+    input [22:0] rv_addr  /* synthesis syn_keep=1 */,
+    input [31:0] rv_wdata /* synthesis syn_keep=1 */,
+    input [3:0] rv_wstrb  /* synthesis syn_keep=1 */,
+    output reg rv_ready   /* synthesis syn_keep=1 */,            // 1: rv_rdata is available now
+    output [31:0] rv_rdata/* synthesis syn_keep=1 */,
 
-    // RV may access eeprom for save persistence
-    output              eeprom_valid,
-    output      [3:0]   eeprom_wstrb,
-    output     [12:2]   eeprom_addr,
-    input      [31:0]   eeprom_rdata,
-    output     [31:0]   eeprom_wdata,
+    // RV may access eeprom for save persistence (8-bit interface)
+    output reg          eeprom_rd    /* synthesis syn_keep=1 */,
+    output reg          eeprom_wr    /* synthesis syn_keep=1 */,
+    output reg [12:0]   eeprom_addr  /* synthesis syn_keep=1 */,
+    input  reg  [7:0]   eeprom_rdata /* synthesis syn_keep=1 */,
+    output reg  [7:0]   eeprom_wdata /* synthesis syn_keep=1 */,
 
     output reg [22:1]   mem_addr,
     output reg          mem_req,
@@ -27,24 +27,24 @@ module rv_sdram_adapter (
     input [15:0]        mem_dout 
 );
 
-localparam RV_IDLE_REQ0 = 3'd0;
-localparam RV_WAIT0 = 3'd1;
-localparam RV_DATA0 = 3'd2;
-localparam RV_REQ1 = 3'd3;
-localparam RV_WAIT1 = 3'd4;
-localparam RV_READY = 3'd5;
+localparam RV_IDLE_REQ0 = 0;
+localparam RV_WAIT0 = 1;
+localparam RV_DATA0 = 2;
+localparam RV_REQ1 = 3;
+localparam RV_WAIT1 = 4;
+localparam RV_READY = 5;
+localparam RV_EEPROM1 = 6;
+localparam RV_EEPROM2 = 7;
+localparam RV_EEPROM3 = 8;
 
-reg [2:0] rvst ;
+// RV output
+reg [3:0] rvst;
 reg rv_valid_r, rv_word;
 reg [15:0] mem_dout0;
 reg mem_req_r;
-wire eeprom_en = rv_addr[22:20] == 3'd7;
-assign rv_rdata = eeprom_en ? eeprom_rdata : {mem_dout, mem_dout0};
-
-assign eeprom_valid = rv_valid & eeprom_en;
-assign eeprom_addr = rv_addr[12:2];
-assign eeprom_wstrb = rv_wstrb;
-assign eeprom_wdata = rv_wdata;
+reg eeprom_out;
+reg [23:0] eeprom_rdata0;
+assign rv_rdata = eeprom_out ? {eeprom_rdata, eeprom_rdata0} : {mem_dout, mem_dout0};
 
 always @* begin
     reg w;
@@ -61,22 +61,47 @@ always @* begin
     mem_ds = w ? rv_wstrb[3:2] : rv_wstrb[1:0];
 end
 
+// EEPROM output
+reg eeprom_wr_buf;
+reg [7:0] eeprom_wdata_buf;
+reg [12:0] eeprom_addr_buf;
+
+always @* begin
+    eeprom_rd = 1;
+    eeprom_wr = 0;
+    if (rv_valid && rv_addr[22:20] == 3'd7 && config_backup_type == 3'd4) begin
+        if (rvst == RV_IDLE_REQ0) begin
+            eeprom_addr = {rv_addr[12:2], 2'b0};
+            eeprom_wr = rv_wstrb[0];
+            eeprom_wdata = rv_wdata[7:0];
+        end else begin
+            eeprom_addr = eeprom_addr_buf;
+            eeprom_wr = eeprom_wr_buf;
+            eeprom_wdata = eeprom_wdata_buf;
+        end
+    end
+end
+
 always @(posedge clk) begin            // RV
     if (~resetn) begin
         rvst <= RV_IDLE_REQ0;
         rv_ready <= 0;
+        eeprom_wr_buf <= 0;
     end else begin
         reg write;
         write = rv_wstrb != 4'b0;
         rv_ready <= 0;
+        eeprom_out <= 0;
         mem_req_r <= mem_req;           // default
 
         case (rvst)
-        RV_IDLE_REQ0: if (rv_valid) begin       // issue request 0
-            if (config_backup_type == 3'd4 && rv_addr[22:20] == 3'd7) begin
-                rv_ready <= 1;
-            end else begin
-                eeprom_en <= 0;
+        RV_IDLE_REQ0: if (rv_valid) begin
+            if (config_backup_type == 4 && rv_addr[22:20] == 7) begin   // EEPROM request
+                eeprom_addr_buf <= {rv_addr[12:2], 2'b01};
+                eeprom_wr_buf <= rv_wstrb[1];
+                eeprom_wdata_buf <= rv_wdata[15:8];
+                rvst <= RV_EEPROM1;
+            end else begin                                              // normal RV request
                 rv_word <= rv_wstrb[3:2] != 2'b0 & rv_wstrb[1:0] == 2'b0;
                 rvst <= RV_WAIT0;        
             end
@@ -112,9 +137,39 @@ always @(posedge clk) begin            // RV
         RV_READY:                               // wait a cycle before returning to idle
             rvst <= RV_IDLE_REQ0;
 
+        RV_EEPROM1: begin
+            rvst <= RV_EEPROM2;
+            eeprom_addr_buf <= {rv_addr[12:2], 2'b10};
+            eeprom_rdata0[7:0] <= eeprom_rdata;
+            eeprom_wr_buf <= rv_wstrb[2];
+            eeprom_wdata_buf <= rv_wdata[23:16];
+        end
+        RV_EEPROM2: begin
+            rvst <= RV_EEPROM3;
+            eeprom_addr_buf <= {rv_addr[12:2], 2'b11};
+            eeprom_rdata0[15:8] <= eeprom_rdata;
+            eeprom_wr_buf <= rv_wstrb[3];
+            eeprom_wdata_buf <= rv_wdata[31:24];
+        end
+        RV_EEPROM3: begin
+            rvst <= RV_READY;
+            eeprom_rdata0[23:16] <= eeprom_rdata;
+            eeprom_wr_buf <= 0;
+            rv_ready <= 1;
+            eeprom_out <= 1;
+        end
+
         default:;
         endcase
+
     end
 end
+
+
+
+always @(posedge clk) begin
+
+end
+
 
 endmodule

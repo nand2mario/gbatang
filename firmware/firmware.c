@@ -1016,14 +1016,20 @@ int loadgba(int rom) {
         }
     } while (br == 1024);
 
-    DEBUG("loadgba: %d bytes rom sent. now initializing cartram\n", total);
+    DEBUG("loadgba: %d bytes rom sent.\n", total); 
 
-    // core_ctrl(2);
-    // int cartrom_data = 0;
-    // if (gba_backup_type == GBA_BACKUP_SRAM || gba_backup_type == GBA_BACKUP_FLASH512K || gba_backup_type == GBA_BACKUP_FLASH1M)
-    //     cartrom_data = 0xffffffff;
-    // for (int i = 0; i < 128*1024/4; i++)
-    //     core_data(cartrom_data);
+    core_ctrl(2);
+    int cartrom_data = 0;
+    if (gba_backup_type == GBA_BACKUP_SRAM || gba_backup_type == GBA_BACKUP_FLASH512K || gba_backup_type == GBA_BACKUP_FLASH1M)
+        cartrom_data = 0xffffffff;
+    DEBUG("loadgba: initializaing cartram with loader command 2");
+    for (int i = 0; i < 128*1024/4; i++)
+        core_data(cartrom_data);
+
+    DEBUG("loadgba: set backup type=%d.\n", gba_backup_type); 
+    core_ctrl(3);
+    core_data(gba_backup_type);
+
     if (gba_backup_type != GBA_BACKUP_NONE) {
         if (gba_backup_type == GBA_BACKUP_FLASH1M) 
             core_backup_size = 128*1024;
@@ -1031,14 +1037,13 @@ int loadgba(int rom) {
             core_backup_size = 8*1024;
         else
             core_backup_size = 64*1024;    
-        memset((uint8_t *)0x700000, 0xff, core_backup_size);		// clear backup memory
+        // DEBUG("loadgba: fill cartram with 0xff, size=%d\n", core_backup_size);
+        // memset((uint8_t *)0x700000, 0xff, core_backup_size);		// clear backup memory
+        if (gba_backup_type != GBA_BACKUP_EEPROM) {     // disable EEPROM persistence for now
+            DEBUG("loadgba: calling backup_load: %s %d\n", core_backup_name, core_backup_size);
+            backup_load(core_backup_name, core_backup_size);
+        }
     }
-    backup_load(core_backup_name, core_backup_size);
-
-    DEBUG("loadgba: now configuring cartram type: %d\n", gba_backup_type);
-
-    core_ctrl(3);
-    core_data(gba_backup_type);
 
     gba_load_bios();
 
@@ -1104,17 +1109,22 @@ int backup_save(char *name, int size) {
     uint8_t *bsram = (uint8_t *)0x700000;		// directly read from BSRAM
     int r = 0;
 
+    uart_printf("backup_save: start\n");
+
     // first check if BSRAM content is changed since last save
     int newcrc = gen_crc16(bsram, size);
     uart_printf("New CRC: %x, size=%d\n", newcrc, size);
-    if (newcrc == snes_bsram_crc16)
-        return 1;
+    if (newcrc == snes_bsram_crc16) {
+        r = 1;
+        goto save_end;
+    }
 
     strcat(path, core_backup_name);
     if (f_open(&f, path, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
         status("Cannot write save file");
         uart_printf("Cannot write save file");
-        return 2;
+        r = 2;
+        goto save_end;
     }
     unsigned int bw;
     // for (int off = 0; off < size; off += bw) {
@@ -1130,6 +1140,9 @@ int backup_save(char *name, int size) {
 
 bsram_save_close:
     f_close(&f);
+
+save_end:
+    uart_printf("backup_save: end\n");
     return r;
 }
 
@@ -1139,7 +1152,7 @@ void backup_process() {
         return;
     int size = 0;
     if (CORE_ID == CORE_GBA) {
-        if (gba_backup_type == GBA_BACKUP_NONE)
+        if (gba_backup_type == GBA_BACKUP_NONE || gba_backup_type == GBA_BACKUP_EEPROM)     // disable EEPROM persistence for now
             return;
         if (gba_backup_type == GBA_BACKUP_FLASH1M) 
             size = 128*1024;
@@ -1155,7 +1168,9 @@ void backup_process() {
         return;
     int t = time_millis();
     if (t - core_backup_time >= 10000) {                    // need to save
+        // uart_printf("CHECK 4F4=%x\n", *(volatile uint32_t *)0x4f4);
         int r = backup_save(core_backup_name, size);
+        // uart_printf("CHECK 4F4=%x\n", *(volatile uint32_t *)0x4f4);
         if (r == 0)
             backup_success_time = t;
         if (backup_success_time != 0) {

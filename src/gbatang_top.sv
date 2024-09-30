@@ -283,10 +283,9 @@ wire        rv_mem_req_ack;
 wire        rv_mem_we;
 
 // EEPROM accesses
-wire        eeprom_valid;
-wire [3:0]  eeprom_wstrb;
-wire [12:2] eeprom_addr;
-wire [31:0] eeprom_rdata, eeprom_wdata;
+wire        eeprom_rd, eeprom_wr;
+wire [12:0] eeprom_addr;
+wire  [7:0] eeprom_rdata, eeprom_wdata;
 
 wire        sdram_busy;
 wire  [2:0] config_backup_type;
@@ -311,7 +310,7 @@ gba_memory mem (
     .sdram_port(cpu_mem_port), .sdram_ready(cpu_mem_ready),
 
     // EEPROM access from RV
-    .eeprom_valid(eeprom_valid), .eeprom_wstrb(eeprom_wstrb), .eeprom_addr(eeprom_addr),
+    .eeprom_rd(eeprom_rd), .eeprom_wr(eeprom_wr), .eeprom_addr(eeprom_addr),
     .eeprom_rdata(eeprom_rdata), .eeprom_wdata(eeprom_wdata),
 
     // Loader interface
@@ -364,7 +363,7 @@ rv_sdram_adapter rv_adapt (
     .mem_dout(rv_mem_dout),
 
     .eeprom_rd(eeprom_rd), .eeprom_wr(eeprom_wr), .eeprom_addr(eeprom_addr),
-    .eeprom_q(eeprom_q), .eeprom_d(eeprom_d), .eeprom_be(eeprom_be)
+    .eeprom_rdata(eeprom_rdata), .eeprom_wdata(eeprom_wdata)
 );
 `else
 

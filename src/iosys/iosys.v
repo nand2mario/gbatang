@@ -58,7 +58,7 @@ module iosys #(
     // 0x_xxxx~6x_xxxx is RV RAM, 7x_xxxx is BSRAM
     output rv_valid,                // 1: active memory access
     input rv_ready,                 // pulse when access is done
-    output [22:0] rv_addr,          // 8MB memory space
+    output [22:0] rv_addr /* synthesis syn_keep=1 */,          // 8MB memory space
     output [31:0] rv_wdata,         // 32-bit write data
     output [3:0] rv_wstrb,          // 4 byte write strobe
     input [31:0] rv_rdata,          // 32-bit read data

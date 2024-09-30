@@ -345,7 +345,7 @@ always @(posedge clk) begin
                     if (rv_addr[22:20] == 3'd7) begin           // cart RAM access
                         addr_latch[1] <= { 8'b1000_0001, rv_addr[17:1], 1'b0};        // 256KB total cart RAM
                         SDRAM_BA <= 2'b00;
-                        a <= {5'b0_0001, rv[17:10]};
+                        a <= {5'b0_0001, rv_addr[17:10]};
                     end else begin                              // normal RV memory
                         addr_latch[1] <= { 3'b101, rv_addr, 1'b0};
                         SDRAM_BA <= 2'b01;         
