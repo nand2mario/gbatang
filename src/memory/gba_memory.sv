@@ -27,24 +27,24 @@
 //
 // Examples with state transitions:
 //   cycle       0     1     2     3     4     5     6     7     8     9    
-// cpu read 16-bit from game pak, data expected in cycle 3
-//   cpu      | req |           | DATA|
-//   sdram          |rd_lo|ready| data|
-//   state    | MAIN|STRT1|WAIT1| MAIN|
-//  cpu_ready             |  1  |
-// cpu read 32-bit from game pak, data expected in cycle 6
-//   cpu      | req |                       | DATA      |
-//   sdram          |rd_lo| wait|rd_hi|ready| data      |
-//   state    | MAIN|STRT1|WAIT1|WAIT1|WAIT1| MAIN
-//  cpu_ready                         |  1  |
-// cpu read 32-bit rom_data and 16-bit ram_rdata from game pak, data expected in cycle 9
-//   cpu      | req |                                   | rom/ram_rdata  |
-//   sdram          |rd_lo| wait|rd_hi|ready|rd_lo|ready|
-//   state    | MAIN|STRT1|WAIT1|WAIT1|WAIT1|STRT2|WAIT2| MAIN
-//  cpu_ready                                     |  1  |
+// cpu read 16-bit from game pak, data expected in cycle 2 (sequential) or 5 (random)
+//   cpu      | req |     | DATA|
+//   sdram    |rd_lo|ready| data|
+//   state    | MAIN|WAIT1| MAIN|
+//  cpu_ready       |  1  |
+// cpu read 32-bit from game pak, data expected in cycle 4 (sequential) or 7 (random)
+//   cpu      | req |                 | DATA      |
+//   sdram    |rd_lo| wait|rd_hi|ready| data      |
+//   state    | MAIN|WAIT1|WAIT1|WAIT1| MAIN
+//  cpu_ready                   |  1  |
+// cpu read 32-bit rom_data and 16-bit ram_rdata from game pak
+//   cpu      | req |                             | rom/ram_rdata  |
+//   sdram    |rd_lo| wait|rd_hi|ready|rd_lo|ready|
+//   state    | MAIN|WAIT1|WAIT1|WAIT1|STRT2|WAIT2| MAIN
+//  cpu_ready                               |  1  |
 // read from IWRAM in a single cycle
 //   dma      | req | DATA|
-//   iwram    |  rd |     |        -- output is driven from bram first (cycle 1), then from registered results
+//   iwram    |  rd |     |      
 //   state    | MAIN| MAIN|
 //
 // DMA can interrupt normal CPU operations. We make sure DMA happens only after a ready cycle 
