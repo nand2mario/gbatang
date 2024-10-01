@@ -107,6 +107,7 @@ module gba_memory (
     output reg          sdram_wr,
     output reg [3:0]    sdram_be,
     input               sdram_ready,
+    input               backup_written,
 
     // EEPROM for access from RV
     input               eeprom_rd,
@@ -639,17 +640,8 @@ always @(posedge clk) begin
     end else begin
         if (cartram_dirty_clear)
             cartram_dirty <= 0;
-        case (config_backup_type)
-        BACKUP_SRAM, BACKUP_FLASH1M, BACKUP_FLASH512K: 
-            if (ram_addr[27:24] == 4'hE & ram_cen & ram_wen |
-                dma_addr[27:24] == 4'hE & dma_ena & dma_wr)
-                cartram_dirty <= 1;
-        BACKUP_EEPROM:
-            if (eeprom_written)
-                cartram_dirty <= 1;
-        default: ;
-        endcase
-
+        if (backup_written | eeprom_written)
+            cartram_dirty <= 1;
     end
 end
 

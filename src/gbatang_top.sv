@@ -292,6 +292,7 @@ wire  [7:0] eeprom_rdata, eeprom_wdata;
 
 wire        sdram_busy;
 wire  [2:0] config_backup_type;
+wire        backup_written;
 
 wire [16:0] dma_eepromcount;
 
@@ -310,7 +311,7 @@ gba_memory mem (
     // SDRAM interface
 	.sdram_addr(cpu_mem_addr), .sdram_wdata(cpu_mem_wdata), .sdram_rdata(cpu_mem_rdata), 
     .sdram_rd(cpu_mem_rd), .sdram_wr(cpu_mem_wr), .sdram_be(cpu_mem_be),
-    .sdram_port(cpu_mem_port), .sdram_ready(cpu_mem_ready),
+    .sdram_port(cpu_mem_port), .sdram_ready(cpu_mem_ready), .backup_written(backup_written),
 
     // EEPROM access from RV
     .eeprom_rd(eeprom_rd), .eeprom_wr(eeprom_wr), .eeprom_addr(eeprom_addr),
@@ -349,7 +350,7 @@ sdram_gba sdram (
 	.cpu_addr(cpu_mem_addr), .cpu_wdata(cpu_mem_wdata), .cpu_rdata(cpu_mem_rdata), 
     .cpu_rd(cpu_mem_rd), .cpu_wr(cpu_mem_wr), .cpu_be(cpu_mem_be),
     .cpu_ready(cpu_mem_ready), .cpu_port(cpu_mem_port),
-    .config_backup_type(config_backup_type),
+    .config_backup_type(config_backup_type), .backup_written(backup_written),
 	
     .rv_addr(rv_mem_addr), .rv_din(rv_mem_din), .rv_ds(rv_mem_ds), 
     .rv_dout(rv_mem_dout), .rv_req(rv_mem_req), .rv_req_ack(rv_mem_req_ack), 

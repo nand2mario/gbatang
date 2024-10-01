@@ -74,6 +74,7 @@ module sdram_gba
     input             resetn,
     input       [2:0] config_backup_type, // backup chip behavior for 26'h204_0000 ~ 26'h204_FFFF
                                     // 0: none, 1: 512Kbit flash, 2: 1Mbit flash, 3: SRAM, 4:EEPROM
+    output reg        backup_written,  // pulse when backup memory is written to
 
     // CPU access. cartridge ROM uses chip 0. EWRAM / cart RAM uses bank 0 of chip 1.
     // 32-bit interface, 2 or 4 cycle latency depending on `cpu_be` values.
@@ -254,7 +255,8 @@ always @(posedge clk) begin
             else
                 cycle[3:0] <= {cycle[2:0], cycle[3]};   // loop cycle 0-3
             refresh_cnt <= refresh_cnt + 1'd1;
-            
+            if (cycle[3]) backup_written <= 0;
+
             ////////////////////////////////////////
             // Collect read data
             ////////////////////////////////////////
@@ -313,6 +315,10 @@ always @(posedge clk) begin
                     if (is_flash & cpu_addr[25:16] == 10'h204) begin
                         cpu_addr_with_bank[16] = f_bank;
                         if (cpu_wr) f_mode <= MODE_NORMAL;      // clear flash byte write mode
+                        if (cpu_wr) backup_written <= 1;        // flash written to
+                    end
+                    if (config_backup_type == 3'd3 & cpu_addr[25:16] == 10'h204) begin
+                        if (cpu_wr) backup_written <= 1;        // SRAM written to
                     end
 
                     hi = !cpu_be[1:0];
@@ -460,6 +466,7 @@ always @(posedge clk) begin
                     if (f_erase_addr[11:1] == {11{1'b1}} & flash == FLASH_ERASESECT | f_erase_addr == 16'hffff) begin
                         flash <= FLASH_IDLE;
                         cpu_ready <= 1;
+                        backup_written <= 1;                // flash written to at end of erase
                     end
                 end
 
