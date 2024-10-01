@@ -22,6 +22,7 @@
 #define reg_spiflash_byte  (*(volatile uint32_t*)0x02000070)
 #define reg_spiflash_word  (*(volatile uint32_t*)0x02000074)
 #define reg_spiflash_ctrl  (*(volatile uint32_t*)0x02000078)
+#define reg_cartram_dirty  (*(volatile uint32_t*)0x02000080)
 
 // Standard library for PicoRV32 RV32I softcore
 

@@ -93,6 +93,9 @@ wire [7:0]  loader_do;
 reg resetn = 0;
 wire gbaon;         // this is resetn signal for everything gba except memory (needed by iosys)
 
+wire cartram_dirty_clear;
+wire cartram_dirty;
+
 /* verilator public_on */
 
 // CPU bus signals
@@ -316,6 +319,7 @@ gba_memory mem (
     // Loader interface
     .loading(loading), .loader_data(loader_do), .loader_valid(loader_do_valid),
     .gbaon(gbaon), .config_backup_type(config_backup_type),
+    .cartram_dirty(cartram_dirty), .cartram_dirty_clear(cartram_dirty_clear),
 
     // Interface to GPU to access special memory like VRAM, OAMRAM, PALETTE
     .vram_lo_addr(vram_lo_addr), .vram_lo_din(vram_lo_din), .vram_lo_dout(vram_lo_dout), 
@@ -478,6 +482,7 @@ iosys #(.CORE_ID(3)) iosys (
 `else
     .rom_loading(loading), .rom_do(loader_do), .rom_do_valid(loader_do_valid), 
 `endif
+    .cartram_dirty(cartram_dirty), .cartram_dirty_clear(cartram_dirty_clear),
     .ram_busy(sdram_busy),
 
     .rv_valid(rv_valid), .rv_ready(rv_ready), .rv_addr(rv_addr), .rv_wdata(rv_wdata), 
@@ -503,7 +508,7 @@ test_loader loader (
 
 `endif 
 
-assign led = ~{7'b000, gbaon};
+assign led = ~{2'b0, cartram_dirty_clear, cartram_dirty, config_backup_type, gbaon};
 
 function [3:0] calc_byte_ena (input [1:0] size, input [1:0] addr);
     casez ({size, addr})

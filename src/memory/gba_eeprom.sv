@@ -48,7 +48,9 @@ module gba_eeprom(
     input rv_wr,
     input [12:0] rv_addr,       
     input [7:0] rv_wdata,
-    output [7:0] rv_rdata
+    output [7:0] rv_rdata,
+
+    output reg written      // pulse when written to
 );
 
 assign ready = valid;   // immediately ready
@@ -108,6 +110,7 @@ always @(posedge clk) begin
         model_detected <= model;
         if (dma_eepromcount == 9 | dma_eepromcount == 73) model_detected <= 0;
         else if (dma_eepromcount == 17 | dma_eepromcount == 81) model_detected <= 1;
+        written <= 0;
 
         if (state == INIT) begin
             {addr,off} <= {addr,off} + 1;
@@ -181,7 +184,10 @@ always @(posedge clk) begin
             end
 
             WR_ZERO: 
-                if (write) state <= IDLE;
+                if (write) begin
+                    state <= IDLE;
+                    written <= 1;       // pulse to notifiy gba_memory that EEPROM is updated
+                end
 
             default: ;
 

@@ -613,7 +613,7 @@ void menu_options() {
         else
             print("SELECT&RIGHT");
         cursor(2, 15);
-        print("Backup BSRAM:");
+        print("Save to SD:");
         cursor(16, 15);
         if (option_backup_bsram)
             print("Yes");
@@ -1092,11 +1092,13 @@ void backup_load(char *name, int size) {
     }
     core_backup_valid = true;
     f_close(&f);
-    int crc = gen_crc16(bsram, size);
-    uart_printf("Save file loaded %d bytes CRC=%x.\n", load, crc);
+    uart_printf("Save file loaded\n", load);
 
 backup_load_crc:
-    snes_bsram_crc16 = gen_crc16(bsram, size);
+    if (CORE_ID == CORE_SNES) {
+        snes_bsram_crc16 = gen_crc16(bsram, size);
+        uart_printf("CRC16: %x\n", snes_bsram_crc16);
+    }
 
     return;
 }
@@ -1106,22 +1108,30 @@ int backup_save(char *name, int size) {
     if (!option_backup_bsram || !core_backup_valid || size == 0) return 1;
     char path[266] = "/saves/";
     FIL f;
-    volatile uint8_t *bsram = (volatile uint8_t *)0x700000;		// directly read from BSRAM
+    uint8_t *bsram = (uint8_t *)0x700000;		// directly read from BSRAM
     int r = 0;
 
     uart_printf("backup_save: start\n");
 
-
-    // XXX: test
-    // volatile uint8_t *pp = (volatile uint8_t *)0x700000;
-
     // first check if BSRAM content is changed since last save
-    int newcrc = gen_crc16(bsram, size);
-    uart_printf("New CRC: %x, size=%d\n", newcrc, size);
-    // uart_printf("0x700000 = %x\n", (*pp) + 0x12345678);
-    if (newcrc == snes_bsram_crc16) {
-        r = 1;
-        goto save_end;
+    if (CORE_ID == CORE_SNES) {
+        // SNES uses CRC check
+        int newcrc = gen_crc16(bsram, size);
+        uart_printf("New CRC: %x, size=%d\n", newcrc, size);
+        if (newcrc == snes_bsram_crc16) {
+            r = 1;
+            goto save_end;
+        }
+        snes_bsram_crc16 = newcrc;
+    } else {
+        // GBA uses dirty flag
+        if (reg_cartram_dirty == 0) {
+            r = 1;
+            uart_printf("Save data not changed\n");
+            goto save_end;
+        }
+        uart_printf("Save data CHANGED\n");
+        reg_cartram_dirty = 0;
     }
 
     strcat(path, core_backup_name);
@@ -1134,6 +1144,7 @@ int backup_save(char *name, int size) {
     unsigned int bw;
     // for (int off = 0; off < size; off += bw) {
     // 	if (f_write(&f, bsram, 1024, &bw) != FR_OK) {
+    uart_printf("Writing save file to: %s, len=%d\n", core_backup_name, size);
     if (f_write(&f, bsram, size, &bw) != FR_OK || bw != size) {
         status("Write failure");
         uart_printf("Write failure, bw=%d\n", bw);
@@ -1141,7 +1152,6 @@ int backup_save(char *name, int size) {
         goto bsram_save_close;
     }
     // }
-    snes_bsram_crc16 = newcrc;
 
 bsram_save_close:
     f_close(&f);

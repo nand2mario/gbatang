@@ -53,6 +53,8 @@ module iosys #(
     output reg [2:0] rom_loading,   // 0: idle, 1: rom loading, 2: cart ram loading, 3: configuration, 4: BIOS loading
     output [7:0] rom_do,            // first 64 bytes are snes header + 32 bytes after snes header 
     output reg rom_do_valid,        // strobe for rom_do
+    input      cartram_dirty,       // cartridge RAM is dirty, needs persistence, content accessible at 0x700000
+    output reg cartram_dirty_clear,
     
     // 32-bit wide memory interface for risc-v softcore
     // 0x_xxxx~6x_xxxx is RV RAM, 7x_xxxx is BSRAM
@@ -190,12 +192,15 @@ wire        spiflash_reg_byte_sel = mem_valid && (mem_addr == 32'h0200_0070);
 wire        spiflash_reg_word_sel = mem_valid && (mem_addr == 32'h0200_0074);
 wire        spiflash_reg_ctrl_sel = mem_valid && (mem_addr == 32'h0200_0078);
 
+wire        cartram_reg_sel = mem_valid && (mem_addr == 32'h 0200_0080);
+
 assign mem_ready = ram_ready || textdisp_reg_char_sel || simpleuart_reg_div_sel || 
             romload_reg_ctrl_sel || romload_reg_data_sel || joystick_reg_sel || time_reg_sel || cycle_reg_sel || id_reg_sel ||
             (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait) ||
             ((simplespimaster_reg_byte_sel || simplespimaster_reg_word_sel) && !simplespimaster_reg_wait) ||
             (spiflash_reg_byte_sel || spiflash_reg_word_sel) && !spiflash_reg_wait ||
-            spiflash_reg_ctrl_sel;
+            spiflash_reg_ctrl_sel ||
+            cartram_reg_sel;
 
 assign mem_rdata = ram_ready ? ram_rdata :
         joystick_reg_sel ? {4'b0, joy2, 4'b0, joy1} :
@@ -206,6 +211,7 @@ assign mem_rdata = ram_ready ? ram_rdata :
         id_reg_sel ? {16'b0, CORE_ID} :
         (simplespimaster_reg_byte_sel | simplespimaster_reg_word_sel) ? simplespimaster_reg_do : 
         (spiflash_reg_byte_sel | spiflash_reg_word_sel) ? spiflash_reg_do :
+        cartram_reg_sel ? cartram_dirty :
         32'h 0000_0000;
 
 picorv32 #(
@@ -303,6 +309,12 @@ always @(posedge clk) begin
     if (romload_reg_ctrl_sel && mem_wstrb) begin
         // control register
         rom_loading <= mem_wdata[2:0];
+    end
+end
+always @(posedge clk) begin         // clear cartram_dirty when register is written to
+    cartram_dirty_clear <= 0;
+    if (cartram_reg_sel && mem_wstrb) begin
+        cartram_dirty_clear <= 1;
     end
 end
 

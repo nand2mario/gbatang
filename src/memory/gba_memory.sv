@@ -122,6 +122,9 @@ module gba_memory (
     output reg          gbaon,          // GBA is turned on after loading goes from none-zero to zero
     output reg  [2:0]   config_backup_type,   // 0: no backup, 1: 512Kbit, 2: 1Mbit, 3: SRAM, 4: EEPROM
 
+    output reg          cartram_dirty,  // set to 1 whenever cartram is written to
+    input               cartram_dirty_clear,    // clears cartram_dirty
+
     // GPU memory interface
     output     [13:0]   vram_lo_addr,
     output     [31:0]   vram_lo_din,
@@ -184,6 +187,7 @@ localparam BACKUP_EEPROM = 3'd4;
 
 reg         config_eeprom_type = 1;                 // 1: 64kbit eeprom, 0: 4kbit
 reg         active;
+wire        eeprom_written;
 
 // these drive all bram-backed memory (iwram, bios, palette, vram, oam, eeprom)
 reg  [1:0]  bram_port;      // 1: ROM, 2: RAM, 3: DMA
@@ -628,6 +632,27 @@ always @(posedge clk) begin
     end
 end
 
+// cartram_dirty
+always @(posedge clk) begin
+    if (~resetn) begin
+        cartram_dirty <= 0;
+    end else begin
+        if (cartram_dirty_clear)
+            cartram_dirty <= 0;
+        case (config_backup_type)
+        BACKUP_SRAM, BACKUP_FLASH1M, BACKUP_FLASH512K: 
+            if (ram_addr[27:24] == 4'hE & ram_cen & ram_wen |
+                dma_addr[27:24] == 4'hE & dma_ena & dma_wr)
+                cartram_dirty <= 1;
+        BACKUP_EEPROM:
+            if (eeprom_written)
+                cartram_dirty <= 1;
+        default: ;
+        endcase
+
+    end
+end
+
 //////////////////////////////////////////////
 // Interface different memory blocks
 //////////////////////////////////////////////
@@ -725,7 +750,7 @@ gba_eeprom eeprom (
     .clk(clk), .rst(~resetn), .cs(sel_eeprom), .model(config_eeprom_type),
     .valid(bram_valid), .write(bram_wr), .ready(),
     .din(bram_wdata[0]), .dout(rdata_eeprom),
-    .dma_eepromcount(dma_eepromcount),
+    .dma_eepromcount(dma_eepromcount), .written(eeprom_written),
 
     .rv_rd(eeprom_rd), .rv_wr(eeprom_wr), .rv_addr(eeprom_addr), .rv_rdata(eeprom_rdata), 
     .rv_wdata(eeprom_wdata)
