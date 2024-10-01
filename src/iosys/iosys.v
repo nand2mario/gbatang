@@ -58,7 +58,7 @@ module iosys #(
     // 0x_xxxx~6x_xxxx is RV RAM, 7x_xxxx is BSRAM
     output rv_valid,                // 1: active memory access
     input rv_ready,                 // pulse when access is done
-    output [22:0] rv_addr /* synthesis syn_keep=1 */,          // 8MB memory space
+    output [22:0] rv_addr,          // 8MB memory space
     output [31:0] rv_wdata,         // 32-bit write data
     output [3:0] rv_wstrb,          // 4 byte write strobe
     input [31:0] rv_rdata,          // 32-bit read data
@@ -151,13 +151,13 @@ always @(posedge clk) begin
 end
 
 // picorv32 softcore
-wire mem_valid /* xsynthesis syn_keep=1 */;
-wire mem_ready;
-wire [31:0] mem_addr /* xsynthesis syn_keep=1 */, mem_wdata /* synthesis syn_keep=1 */;
-wire [3:0] mem_wstrb /* xsynthesis syn_keep=1 */;
+wire mem_valid        /* xsynthesis syn_keep=1 */;
+wire mem_ready        /* xsynthesis syn_keep=1 */;
+wire [31:0] mem_addr  /* xsynthesis syn_keep=1 */;
+wire [31:0] mem_wdata /* xsynthesis syn_keep=1 */;
+wire [3:0]  mem_wstrb /* xsynthesis syn_keep=1 */;
 wire [31:0] mem_rdata /* xsynthesis syn_keep=1 */;
-
-reg ram_ready /* xsynthesis syn_keep=1 */;
+reg ram_ready         /* xsynthesis syn_keep=1 */;
 reg [31:0] ram_rdata;
 
 wire        ram_sel = mem_valid && mem_addr[31:23] == 0;

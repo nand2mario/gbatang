@@ -1106,14 +1106,19 @@ int backup_save(char *name, int size) {
     if (!option_backup_bsram || !core_backup_valid || size == 0) return 1;
     char path[266] = "/saves/";
     FIL f;
-    uint8_t *bsram = (uint8_t *)0x700000;		// directly read from BSRAM
+    volatile uint8_t *bsram = (volatile uint8_t *)0x700000;		// directly read from BSRAM
     int r = 0;
 
     uart_printf("backup_save: start\n");
 
+
+    // XXX: test
+    // volatile uint8_t *pp = (volatile uint8_t *)0x700000;
+
     // first check if BSRAM content is changed since last save
     int newcrc = gen_crc16(bsram, size);
     uart_printf("New CRC: %x, size=%d\n", newcrc, size);
+    // uart_printf("0x700000 = %x\n", (*pp) + 0x12345678);
     if (newcrc == snes_bsram_crc16) {
         r = 1;
         goto save_end;
@@ -1169,6 +1174,7 @@ void backup_process() {
     int t = time_millis();
     if (t - core_backup_time >= 10000) {                    // need to save
         // uart_printf("CHECK 4F4=%x\n", *(volatile uint32_t *)0x4f4);
+        uart_printf("Check backup: type=%d, size=%d\n", gba_backup_type, size);
         int r = backup_save(core_backup_name, size);
         // uart_printf("CHECK 4F4=%x\n", *(volatile uint32_t *)0x4f4);
         if (r == 0)
@@ -1184,7 +1190,7 @@ void backup_process() {
 
 #define CRC16 0x8005
 
-uint16_t gen_crc16(const uint8_t *data, uint16_t size) {
+uint16_t gen_crc16(const volatile uint8_t *data, int size) {
     uint16_t out = 0;
     int bits_read = 0, bit_flag;
 

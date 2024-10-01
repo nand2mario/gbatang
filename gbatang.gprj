@@ -71,6 +71,6 @@
         <File path="src/gbatang.gao" type="file.gao" enable="0"/>
         <File path="src/iosys.gao" type="file.gao" enable="0"/>
         <File path="src/gpu.gao" type="file.gao" enable="0"/>
-        <File path="src/save.gao" type="file.gao" enable="0"/>
+        <File path="src/eeprom.gao" type="file.gao" enable="0"/>
     </FileList>
 </Project>

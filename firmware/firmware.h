@@ -25,6 +25,6 @@ void status(char *msg);
 
 #define CRC16 0x8005
 
-uint16_t gen_crc16(const uint8_t *data, uint16_t size);
+uint16_t gen_crc16(const volatile uint8_t *data, int size);
 
 #endif

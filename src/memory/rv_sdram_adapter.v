@@ -4,19 +4,19 @@ module rv_sdram_adapter (
     input resetn,
     input       [2:0] config_backup_type,       // EEPROM enabled when config_backup_type == 4
 
-    input rv_valid        /* synthesis syn_keep=1 */,
-    input [22:0] rv_addr  /* synthesis syn_keep=1 */,
-    input [31:0] rv_wdata /* synthesis syn_keep=1 */,
-    input [3:0] rv_wstrb  /* synthesis syn_keep=1 */,
-    output reg rv_ready   /* synthesis syn_keep=1 */,            // 1: rv_rdata is available now
-    output [31:0] rv_rdata/* synthesis syn_keep=1 */,
+    input rv_valid        /* xsynthesis syn_keep=1 */,
+    input [22:0] rv_addr  /* xsynthesis syn_keep=1 */,
+    input [31:0] rv_wdata /* xsynthesis syn_keep=1 */,
+    input [3:0] rv_wstrb  /* xsynthesis syn_keep=1 */,
+    output reg rv_ready   /* xsynthesis syn_keep=1 */,            // 1: rv_rdata is available now
+    output [31:0] rv_rdata/* xsynthesis syn_keep=1 */,
 
     // RV may access eeprom for save persistence (8-bit interface)
-    output reg          eeprom_rd    /* synthesis syn_keep=1 */,
-    output reg          eeprom_wr    /* synthesis syn_keep=1 */,
-    output reg [12:0]   eeprom_addr  /* synthesis syn_keep=1 */,
-    input  reg  [7:0]   eeprom_rdata /* synthesis syn_keep=1 */,
-    output reg  [7:0]   eeprom_wdata /* synthesis syn_keep=1 */,
+    output reg          eeprom_rd    /* xsynthesis syn_keep=1 */,
+    output reg          eeprom_wr    /* xsynthesis syn_keep=1 */,
+    output reg [12:0]   eeprom_addr  /* xsynthesis syn_keep=1 */,
+    input  reg  [7:0]   eeprom_rdata /* xsynthesis syn_keep=1 */,
+    output reg  [7:0]   eeprom_wdata /* xsynthesis syn_keep=1 */,
 
     output reg [22:1]   mem_addr,
     output reg          mem_req,
@@ -69,16 +69,15 @@ reg [12:0] eeprom_addr_buf;
 always @* begin
     eeprom_rd = 1;
     eeprom_wr = 0;
+    eeprom_addr = eeprom_addr_buf;
+    eeprom_wdata = eeprom_wdata_buf;
     if (rv_valid && rv_addr[22:20] == 3'd7 && config_backup_type == 3'd4) begin
         if (rvst == RV_IDLE_REQ0) begin
-            eeprom_addr = {rv_addr[12:2], 2'b0};
             eeprom_wr = rv_wstrb[0];
+            eeprom_addr = {rv_addr[12:2], 2'b0};
             eeprom_wdata = rv_wdata[7:0];
-        end else begin
-            eeprom_addr = eeprom_addr_buf;
+        end else
             eeprom_wr = eeprom_wr_buf;
-            eeprom_wdata = eeprom_wdata_buf;
-        end
     end
 end
 

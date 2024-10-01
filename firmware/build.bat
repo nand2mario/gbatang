@@ -4,7 +4,7 @@
 
 @REM Download RISC-V gcc toolchain for x64 from https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/
 set CROSS=D:\opt\xpack-riscv-none-elf-gcc-13.2.0-2\bin\riscv-none-elf-
-set CFLAGS=-O3 -mabi=ilp32 -march=rv32i -ffreestanding
+set CFLAGS=-O2 -mabi=ilp32 -march=rv32i -ffreestanding
 
 %CROSS%as -mabi=ilp32 -march=rv32i -c -o start.o start.S
 %CROSS%gcc %CFLAGS% -c -o firmware.o firmware.c

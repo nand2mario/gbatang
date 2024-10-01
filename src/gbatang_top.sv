@@ -266,21 +266,21 @@ wire        cpu_mem_ready;
 wire [1:0]  cpu_mem_port;
 
 // iosys RV memory interface
-wire        rv_valid;
-wire        rv_ready;
-wire [22:0] rv_addr;
-wire [31:0] rv_wdata;
-wire [3:0]  rv_wstrb;
-wire [31:0] rv_rdata;
+wire        rv_valid        /* synthesis syn_keep=1 */;
+wire        rv_ready        /* synthesis syn_keep=1 */;
+wire [22:0] rv_addr         /* synthesis syn_keep=1 */;
+wire [31:0] rv_wdata        /* synthesis syn_keep=1 */;
+wire [3:0]  rv_wstrb        /* synthesis syn_keep=1 */;
+wire [31:0] rv_rdata        /* synthesis syn_keep=1 */;
 
 // sdram-side interface
-wire [22:1] rv_mem_addr;
-wire [15:0] rv_mem_din;
-wire [1:0]  rv_mem_ds;
-wire [15:0] rv_mem_dout;
-wire        rv_mem_req;
-wire        rv_mem_req_ack;
-wire        rv_mem_we;
+wire [22:1] rv_mem_addr     /* synthesis syn_keep=1 */;
+wire [15:0] rv_mem_din      /* synthesis syn_keep=1 */;
+wire [1:0]  rv_mem_ds       /* synthesis syn_keep=1 */;
+wire [15:0] rv_mem_dout     /* synthesis syn_keep=1 */;
+wire        rv_mem_req      /* synthesis syn_keep=1 */;
+wire        rv_mem_req_ack  /* synthesis syn_keep=1 */;
+wire        rv_mem_we       /* synthesis syn_keep=1 */;
 
 // EEPROM accesses
 wire        eeprom_rd, eeprom_wr;
