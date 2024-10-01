@@ -399,7 +399,7 @@ int main(int argc, char **argv, char **env)
 		cnt++;
 
 		if (sim_on && max_sim_time > 0 && sim_time >= max_sim_time) {
-			printf("Simulation time is up: sim_time=%llu\n", sim_time);
+			printf("Simulation time is up: sim_time=%" PRIu64 "\n", sim_time);
 			sim_on = false;
 		}
 
@@ -452,14 +452,14 @@ int main(int argc, char **argv, char **env)
 
 
 			// collect audio samples @ 48Khz
-			if (sim_time % (16780000 * 4 / 48000) == 0 && top->gba_on) {
+			if (sim_time % (16777216 * 6 / 48000) == 0 && top->gba_on) {
 				uint16_t ar, al;
 				ar = gba->sound_out_right;
 				al = gba->sound_out_left;
 				if (al != 0 || ar != 0)
 					sample_valid = true;
-				fwrite(&ar, sizeof(ar), 1, f);
 				fwrite(&al, sizeof(al), 1, f);
+				fwrite(&ar, sizeof(ar), 1, f);
 				samples++;
 				if (samples % 1000 == 0 && sample_valid)
 				{
@@ -527,7 +527,7 @@ int main(int argc, char **argv, char **env)
 						if (sim_on)
 							printf("Simulation started\n");
 						else
-							printf("Simulation stopped: sim_time=%llu\n", sim_time);
+							printf("Simulation stopped: sim_time=%" PRIu64 "\n", sim_time);
 						break;
 					case SDLK_ESCAPE: 	done = true; break;
 					case SDLK_p:		showSpritesWindow(); break;

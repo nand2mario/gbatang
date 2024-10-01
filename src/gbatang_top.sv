@@ -269,21 +269,21 @@ wire        cpu_mem_ready;
 wire [1:0]  cpu_mem_port;
 
 // iosys RV memory interface
-wire        rv_valid        /* synthesis syn_keep=1 */;
-wire        rv_ready        /* synthesis syn_keep=1 */;
-wire [22:0] rv_addr         /* synthesis syn_keep=1 */;
-wire [31:0] rv_wdata        /* synthesis syn_keep=1 */;
-wire [3:0]  rv_wstrb        /* synthesis syn_keep=1 */;
-wire [31:0] rv_rdata        /* synthesis syn_keep=1 */;
+wire        rv_valid        /* xsynthesis syn_keep=1 */;
+wire        rv_ready        /* xsynthesis syn_keep=1 */;
+wire [22:0] rv_addr         /* xsynthesis syn_keep=1 */;
+wire [31:0] rv_wdata        /* xsynthesis syn_keep=1 */;
+wire [3:0]  rv_wstrb        /* xsynthesis syn_keep=1 */;
+wire [31:0] rv_rdata        /* xsynthesis syn_keep=1 */;
 
 // sdram-side interface
-wire [22:1] rv_mem_addr     /* synthesis syn_keep=1 */;
-wire [15:0] rv_mem_din      /* synthesis syn_keep=1 */;
-wire [1:0]  rv_mem_ds       /* synthesis syn_keep=1 */;
-wire [15:0] rv_mem_dout     /* synthesis syn_keep=1 */;
-wire        rv_mem_req      /* synthesis syn_keep=1 */;
-wire        rv_mem_req_ack  /* synthesis syn_keep=1 */;
-wire        rv_mem_we       /* synthesis syn_keep=1 */;
+wire [22:1] rv_mem_addr     /* xsynthesis syn_keep=1 */;
+wire [15:0] rv_mem_din      /* xsynthesis syn_keep=1 */;
+wire [1:0]  rv_mem_ds       /* xsynthesis syn_keep=1 */;
+wire [15:0] rv_mem_dout     /* xsynthesis syn_keep=1 */;
+wire        rv_mem_req      /* xsynthesis syn_keep=1 */;
+wire        rv_mem_req_ack  /* xsynthesis syn_keep=1 */;
+wire        rv_mem_we       /* xsynthesis syn_keep=1 */;
 
 // EEPROM accesses
 wire        eeprom_rd, eeprom_wr;
@@ -448,8 +448,8 @@ gba_joypad joypad (
 `ifndef VERILATOR
 // wire overlay = ~s1;      // for debug
 wire overlay;
-wire [14:0] overlay_color;
 wire [10:0] overlay_x;
+wire [14:0] overlay_color;
 wire [9:0] overlay_y;
 
 gba2hdmi video (
