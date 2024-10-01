@@ -1039,10 +1039,10 @@ int loadgba(int rom) {
             core_backup_size = 64*1024;    
         // DEBUG("loadgba: fill cartram with 0xff, size=%d\n", core_backup_size);
         // memset((uint8_t *)0x700000, 0xff, core_backup_size);		// clear backup memory
-        if (gba_backup_type != GBA_BACKUP_EEPROM) {     // disable EEPROM persistence for now
-            DEBUG("loadgba: calling backup_load: %s %d\n", core_backup_name, core_backup_size);
-            backup_load(core_backup_name, core_backup_size);
-        }
+        // if (gba_backup_type != GBA_BACKUP_EEPROM) {     // disable EEPROM persistence for now
+        DEBUG("loadgba: calling backup_load: %s %d\n", core_backup_name, core_backup_size);
+        backup_load(core_backup_name, core_backup_size);
+        // }
     }
 
     gba_load_bios();
@@ -1099,6 +1099,8 @@ backup_load_crc:
         snes_bsram_crc16 = gen_crc16(bsram, size);
         uart_printf("CRC16: %x\n", snes_bsram_crc16);
     }
+    if (CORE_ID == CORE_GBA)
+        reg_cartram_dirty = 0;
 
     return;
 }
@@ -1167,7 +1169,8 @@ void backup_process() {
         return;
     int size = 0;
     if (CORE_ID == CORE_GBA) {
-        if (gba_backup_type == GBA_BACKUP_NONE || gba_backup_type == GBA_BACKUP_EEPROM)     // disable EEPROM persistence for now
+        // if (gba_backup_type == GBA_BACKUP_NONE || gba_backup_type == GBA_BACKUP_EEPROM)     // disable EEPROM persistence for now
+        if (gba_backup_type == GBA_BACKUP_NONE)
             return;
         if (gba_backup_type == GBA_BACKUP_FLASH1M) 
             size = 128*1024;

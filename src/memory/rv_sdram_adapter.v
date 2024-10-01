@@ -46,9 +46,11 @@ reg eeprom_out;
 reg [23:0] eeprom_rdata0;
 assign rv_rdata = eeprom_out ? {eeprom_rdata, eeprom_rdata0} : {mem_dout, mem_dout0};
 
+wire is_eeprom = config_backup_type == 4 && rv_addr[22:20] == 3'd7;
+
 always @* begin
     reg w;
-    if (rv_valid & rvst == RV_IDLE_REQ0) begin  // start of request
+    if (rv_valid & ~is_eeprom & rvst == RV_IDLE_REQ0) begin  // start of RV request
         w = rv_wstrb[3:2] != 2'b0 & rv_wstrb[1:0] == 2'b0;
         mem_req = ~mem_req_r;
     end else begin                              // subsequent cycles
@@ -71,7 +73,7 @@ always @* begin
     eeprom_wr = 0;
     eeprom_addr = eeprom_addr_buf;
     eeprom_wdata = eeprom_wdata_buf;
-    if (rv_valid && rv_addr[22:20] == 3'd7 && config_backup_type == 3'd4) begin
+    if (rv_valid & is_eeprom) begin
         if (rvst == RV_IDLE_REQ0) begin
             eeprom_wr = rv_wstrb[0];
             eeprom_addr = {rv_addr[12:2], 2'b0};
@@ -95,7 +97,7 @@ always @(posedge clk) begin            // RV
 
         case (rvst)
         RV_IDLE_REQ0: if (rv_valid) begin
-            if (config_backup_type == 4 && rv_addr[22:20] == 7) begin   // EEPROM request
+            if (config_backup_type == 4 && rv_addr[22:20] == 3'd7) begin   // EEPROM request, 700000-701FFF (8KB)
                 eeprom_addr_buf <= {rv_addr[12:2], 2'b01};
                 eeprom_wr_buf <= rv_wstrb[1];
                 eeprom_wdata_buf <= rv_wdata[15:8];
