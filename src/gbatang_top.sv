@@ -425,6 +425,7 @@ gba_timer timer (
 // Joypad
 ////////////////////////////
 
+wire [11:0] joy_btns_gba, joy_btns_iosys;
 `ifndef VERILATOR
 wire [11:0] joy_btns;       // (R L X A RT LT DN UP START SELECT Y B)
 controller_ds2 ds2 (
@@ -432,11 +433,12 @@ controller_ds2 ds2 (
     .ds_clk(ds_clk), .ds_miso(ds_miso), .ds_mosi(ds_mosi), .ds_cs(ds_cs) 
 );
 `endif
+
 gba_joypad joypad (
     .mclk(clk16), /*.fclk(clk33),*/ `GB_BUS_PORTS_INST, .IRP_Joypad(IRP_Joypad),
-    .KeyA(joy_btns[8]), .KeyB(joy_btns[0]), .KeySelect(joy_btns[2]), .KeyStart(joy_btns[3]), 
-    .KeyRight(joy_btns[7]), .KeyLeft(joy_btns[6]), .KeyUp(joy_btns[4]), .KeyDown(joy_btns[5]), 
-    .KeyR(joy_btns[11]), .KeyL(joy_btns[10]),
+    .KeyA(joy_btns_gba[8]), .KeyB(joy_btns_gba[0]), .KeySelect(joy_btns_gba[2]), .KeyStart(joy_btns_gba[3]), 
+    .KeyRight(joy_btns_gba[7]), .KeyLeft(joy_btns_gba[6]), .KeyUp(joy_btns_gba[4]), .KeyDown(joy_btns_gba[5]), 
+    .KeyR(joy_btns_gba[11]), .KeyL(joy_btns_gba[10]),
     .cpu_done()
 );
 
@@ -451,6 +453,8 @@ wire overlay;
 wire [10:0] overlay_x;
 wire [14:0] overlay_color;
 wire [9:0] overlay_y;
+assign joy_btns_gba = overlay ? 0 : joy_btns;
+assign joy_btns_iosys = overlay ? joy_btns : 0;
 
 gba2hdmi video (
 	.clk(clk50), .resetn(resetn),
@@ -476,7 +480,7 @@ iosys #(.CORE_ID(3)) iosys (
     .clk(clk16), .hclk(hclk), .spi_clk(clk67), .resetn(resetn),
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
-    .joy1(joy_btns), .joy2(12'b0),
+    .joy1(joy_btns_iosys), .joy2(12'b0),
 
 `ifdef TEST_LOADER
     .rom_loading(), .rom_do(), .rom_do_valid(), 

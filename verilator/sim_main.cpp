@@ -110,11 +110,11 @@ const int BACKUP_SRAM = 3;
 const int BACKUP_EEPROM = 4;
 
 const char *backup_type_name(int t) {
-	if (t == 0) return "NONE";
-	if (t == 1) return "FLASH512K";
-	if (t == 1) return "FLASH1M";
-	if (t == 3) return "SRAM";
-	if (t == 4) return "EEPROM";
+	if (t == BACKUP_NONE) return "NONE";
+	if (t == BACKUP_FLASH512K) return "FLASH512K";
+	if (t == BACKUP_FLASH1M) return "FLASH1M";
+	if (t == BACKUP_SRAM) return "SRAM";
+	if (t == BACKUP_EEPROM) return "EEPROM";
 	return "UNKNOWN";
 } 
 
