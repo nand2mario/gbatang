@@ -425,13 +425,15 @@ gba_timer timer (
 // Joypad
 ////////////////////////////
 
-wire [11:0] joy_btns_gba, joy_btns_iosys;
 `ifndef VERILATOR
+wire [11:0] joy_btns_gba, joy_btns_iosys;
 wire [11:0] joy_btns;       // (R L X A RT LT DN UP START SELECT Y B)
 controller_ds2 ds2 (
     .clk(clk16), .snes_buttons(joy_btns),
     .ds_clk(ds_clk), .ds_miso(ds_miso), .ds_mosi(ds_mosi), .ds_cs(ds_cs) 
 );
+`else
+wire [11:0] joy_btns_gba = joy_btns;
 `endif
 
 gba_joypad joypad (

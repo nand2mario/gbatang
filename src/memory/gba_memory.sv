@@ -730,7 +730,8 @@ assign vram_lo_be = bram_wr ? bram_be16 : 4'b1111;
 assign vram_hi_addr = bram_addr[14:2];
 assign vram_hi_din = bram_wdata16;
 assign vram_hi_we = bram_wr & sel_vram & bram_addr[16];
-assign vram_hi_be = bram_wr ? bram_be16b : 4'b1111;
+// assign vram_hi_be = bram_wr ? bram_be16b : 4'b1111;
+assign vram_hi_be = bram_wr ? bram_be16 : 4'b1111;     
 
 // OAM:         7:000000 - 7:0003FF (1KB)
 assign oamram_addr = bram_addr[9:2];
