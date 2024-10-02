@@ -238,7 +238,7 @@ module gba_sound(clk, gb_on, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb_bus_
         .sound_on(sound_on_ch4)
     );
     
-    gba_sound_dma #(FIFO_A) igba_sound_dmaA(
+    gba_sound_dma #(.REG_FIFO(FIFO_A)) igba_sound_dmaA(
         .clk(clk),
         .reset(reset),
         `GB_BUS_PORTS_INST,
@@ -262,7 +262,7 @@ module gba_sound(clk, gb_on, reset, gb_bus_din, gb_bus_dout, gb_bus_adr, gb_bus_
         .debug_fifocount(debug_fifocount)
     );
     
-    gba_sound_dma #(FIFO_B) igba_sound_dmaB(
+    gba_sound_dma #(.REG_FIFO(FIFO_B)) igba_sound_dmaB(
         .clk(clk),
         .reset(reset),
         `GB_BUS_PORTS_INST,
