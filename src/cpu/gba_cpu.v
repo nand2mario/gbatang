@@ -1120,7 +1120,7 @@ assign to_vld = cmd_ok & ( cmd_is_mrs |
                 cmd_is_mult | cmd_is_multl | cmd_is_multlx | 
                 ((cmd_is_ldrh0|cmd_is_ldrh1|cmd_is_ldrsb0|cmd_is_ldrsb1|cmd_is_ldrsh0|
                     cmd_is_ldrsh1|cmd_is_ldr0|cmd_is_ldr1) & (cmd[21]|~cmd[24])) |
-                (cmd_is_ldm & cmd_sum_m==5'b0 & cmd[21] & ~basereg_in_list) );
+                (cmd_is_ldm & cmd_sum_m==5'b0 & cmd[21] & (~basereg_in_list | ~cmd[20])) );  // LDM does not write-back basereg if it is in reglist
 
 always @ ( cmd_is_mrs or cmd_is_dp0 or cmd_is_dp1 or cmd_is_dp2 or cmd_is_multl or cmd )
 if (cmd_is_mrs|(cmd_is_dp0|cmd_is_dp1|cmd_is_dp2)|cmd_is_multl)
