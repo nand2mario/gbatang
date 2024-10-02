@@ -151,9 +151,9 @@ end
 
 reg [15:0] audio_sample_word [1:0], audio_sample_word0 [1:0];
 always @(posedge clk_pixel) begin       // crossing clock domain
-    audio_sample_word0[0] <= sound_right;
+    audio_sample_word0[0] <= sound_left;
     audio_sample_word[0] <= audio_sample_word0[0];
-    audio_sample_word0[1] <= sound_left;
+    audio_sample_word0[1] <= sound_right;
     audio_sample_word[1] <= audio_sample_word0[1];
 end
 
