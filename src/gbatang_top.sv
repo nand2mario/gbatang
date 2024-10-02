@@ -456,7 +456,6 @@ wire [10:0] overlay_x;
 wire [14:0] overlay_color;
 wire [9:0] overlay_y;
 assign joy_btns_gba = overlay ? 0 : joy_btns;
-assign joy_btns_iosys = overlay ? joy_btns : 0;
 
 gba2hdmi video (
 	.clk(clk50), .resetn(resetn),
@@ -482,7 +481,7 @@ iosys #(.CORE_ID(3)) iosys (
     .clk(clk16), .hclk(hclk), .spi_clk(clk67), .resetn(resetn),
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
-    .joy1(joy_btns_iosys), .joy2(12'b0),
+    .joy1(joy_btns), .joy2(12'b0),
 
 `ifdef TEST_LOADER
     .rom_loading(), .rom_do(), .rom_do_valid(), 
