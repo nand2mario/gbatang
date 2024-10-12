@@ -5,17 +5,9 @@
 
 This is a Game Boy Advance FPGA core for Sipeed [Tang Mega 138K](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k.html), [Mega 138K Pro](https://wiki.sipeed.com/hardware/en/tang/tang-mega-138k/mega-138k-pro.html) and the upcoming handheld TangConsole 60K. 
 
-The core outputs 720p HDMI video, accepts DS2 controller input, and supports all ROM sizes (up to 32MB). An open source BIOS is used so it can be used out of the box. ROMs are loaded from the SD card through a convenient menu system.  This is still a work in progress and compatibility is quickly improving. Currently 85 out of top 100 games work. The following are games that are verified to work,
+The core outputs 720p HDMI video, accepts DS2 controller input, and supports all ROM sizes (up to 32MB). An open source BIOS is used so it can be used out of the box. ROMs are loaded from the SD card through a convenient menu system.  
 
-* Super Mario Advance, and 2, 3, 4
-* F-ZERO Maximum Velocity
-* Donkey Kong Country
-* Bomberman Tournament
-* Metroid Fusion, Metroid - Zero Mission
-* NES Classic series - IceClimber, Super Mario Bros., Donkey Kong
-* and many more
-
-Missing things that I expect to implement include cartridge backup, SNES controller input, and game compatibility fixes.
+Things-to-do on my list include SNES controller input, and further game compatibility fixes (currently 90 out of top 100 games work).
 
 Follow [me](https://x.com/nand2mario) on X to get updates. Also check out other cores in the series: [SNESTang](https://github.com/nand2mario/snestang) and [NESTang](https://github.com/nand2mario/nestang).
 
@@ -34,6 +26,8 @@ Then follow these steps to install the core (for detailed instructions, for now 
 4. Again use Gowin programmer. Program `gbatang_m138k.fs` or `gbatang_m138kpro.fs` to on-board flash at starting address 0x000000.
 
 5. Put GBA roms and GBA BIOS on the MicroSD card. The 16KB GBA BIOS ROM should be named `gba_bios.bin` and placed at the root dir. Then insert the card into the on-board MicroSD slot and power up the board.
+
+6. Game progress saving is implemented in version 0.5. It is off by default and can be turned on in options.
 
 ## About this project
 
