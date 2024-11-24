@@ -1,7 +1,7 @@
 {
  "BACKGROUND_PROGRAMMING" : "off",
  "COMPRESS" : false,
- "CPU" : false,
+ "CPU" : true,
  "CRC_CHECK" : true,
  "Clock_Route_Order" : 0,
  "Convert_SDP32_36_to_SDP16_18" : true,
@@ -32,6 +32,8 @@
  "HOTBOOT" : false,
  "I2C" : false,
  "I2C_SLAVE_ADDR" : "00",
+ "INCREMENTAL_PLACE_AND_ROUTING" : "0",
+ "INCREMENTAL_PLACE_ONLY" : "0",
  "IncludePath" : [
   "src/common"
  ],
@@ -39,7 +41,7 @@
  "Initialize_Primitives" : false,
  "JTAG" : false,
  "MODE_IO" : false,
- "MSPI" : false,
+ "MSPI" : true,
  "MSPI_JUMP" : false,
  "MULTIBOOT_ADDRESS_WIDTH" : "24",
  "MULTIBOOT_MODE" : "Normal",

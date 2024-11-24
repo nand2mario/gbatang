@@ -1640,6 +1640,32 @@ end
             end
         end 
     
+    linebuffer linebuf_bg0 (
+        .clk(fclk), .waddr(pixel_x_bg0), .wdata(pixeldata_bg0), .we(pixel_we_bg0), .raddr(linebuffer_addr), .rdata(linebuffer_bg0_data)
+    );
+
+    linebuffer linebuf_bg1 (
+        .clk(fclk), .waddr(pixel_x_bg1), .wdata(pixeldata_bg1), .we(pixel_we_bg1), .raddr(linebuffer_addr), .rdata(linebuffer_bg1_data)
+    );
+
+    linebuffer linebuf_bg2 (
+        .clk(fclk), .waddr(pixel_x_bg2), .wdata(pixeldata_bg2), .we(pixel_we_bg2), .raddr(linebuffer_addr), .rdata(linebuffer_bg2_data)
+    );
+
+    linebuffer linebuf_bg3 (
+        .clk(fclk), .waddr(pixel_x_bg3), .wdata(pixeldata_bg3), .we(pixel_we_bg3), .raddr(linebuffer_addr), .rdata(linebuffer_bg3_data)
+    );
+
+    linebuffer linebuf_obj_color (
+        .clk(fclk), .waddr(pixel_x_obj), .wdata(pixeldata_obj_color), .we(pixel_we_obj_color), .raddr(linebuffer_addr), .rdata(linebuffer_obj_color)
+    );
+
+    linebuffer #(4, 8) linebuf_obj_settings (
+        .clk(fclk), .waddr(pixel_x_obj), .wdata(pixeldata_obj_settings), .we(pixel_we_obj_settings), .raddr(linebuffer_addr), .rdata(linebuffer_obj_setting)
+    );
+
+
+/*
     // line buffers
     // SyncRamDual #(16, 8) ilinebuffer_bg0(
     //     .clk(fclk),
@@ -1893,6 +1919,7 @@ end
         .we_b(1'b0),
         .re_b(1'b1)
     );
+*/
     
     assign linebuffer_obj_data = {linebuffer_obj_setting, linebuffer_obj_color};
     assign linebuffer_obj_data_hd0 = {linebuffer_obj_setting_hd0, linebuffer_obj_color_hd0};

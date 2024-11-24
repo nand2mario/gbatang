@@ -67,7 +67,8 @@ reg out1;               // always output 1 when IDLE
 
 assign dout = out1 ? 1'b1 : mem_dout;
 
-`ifndef VERILATOR
+`ifdef M138K
+
 mem_eeprom m_eeprom (
     .clka(clk), .cea(1'b1), .reseta(rst),
     .ada(fulladdr[15:0]), .wrea(mem_write), .ocea(1'b1),
@@ -76,13 +77,14 @@ mem_eeprom m_eeprom (
     .adb(rv_addr), .wreb(rv_wr), .oceb(1'b1),
     .doutb(rv_rdata), .dinb(rv_wdata)
 );
-`else
-reg [64*1024-1:0] mem;  // 64Kbits of memory, 4 BRAM blocks
 
-always @(posedge clk) begin
-    if (mem_write) mem[fulladdr[15:0]] <= mem_din;
-    mem_dout <= mem[fulladdr[15:0]];
-end
+`else
+//reg [64*1024-1:0] mem /* synthesis syn_ramstyle="distributed_ram" */;  // 64Kbits of memory, 4 BRAM blocks
+
+//always @(posedge clk) begin
+//    if (mem_write) mem[fulladdr[15:0]] <= mem_din;
+//    mem_dout <= mem[fulladdr[15:0]];
+//end
 
 `endif
 
