@@ -71,7 +71,6 @@ assign overlay_y = cy;
 //
 localparam MEM_DEPTH=240*160;       // 38400, 37K words, 16-bit address
 
-logic [17:0] mem [0:MEM_DEPTH-1];
 logic [$clog2(MEM_DEPTH)-1:0] mem_portA_addr;
 logic [17:0] mem_portA_wdata;
 logic mem_portA_we;
@@ -83,21 +82,26 @@ logic initializing = 1;
 logic [7:0] init_y = 0;
 logic [7:0] init_x = 0; 
 
+fb u_fb(
+    .clka(clk), .clkb(clk), .reseta('b0), .resetb(1'b0), .cea('b1), .ceb('b1), 
+    // port A write
+    .ada(mem_portA_addr), .douta(), .ocea(1'b0), .wrea(mem_portA_we), .dina(mem_portA_wdata),
+    // port B read
+    .adb(mem_portB_addr), .doutb(mem_portB_rdata), .oceb(1'b1), .wreb('b0), .dinb('b0)
+);
+
+// logic [17:0] mem [0:MEM_DEPTH-1];
 // BRAM port A read/write
-always_ff @(posedge clk) begin
-    if (mem_portA_we) begin
-        mem[mem_portA_addr] <= mem_portA_wdata;
-    end
-end
+// always_ff @(posedge clk) begin
+//     if (mem_portA_we) begin
+//         mem[mem_portA_addr] <= mem_portA_wdata;
+//     end
+// end
 
 // BRAM port B read
-always_ff @(posedge clk_pixel) begin
-    mem_portB_rdata <= mem[mem_portB_addr];
-end
-
-initial begin
-    // $readmemb("background.txt", mem);
-end
+// always_ff @(posedge clk_pixel) begin
+//     mem_portB_rdata <= mem[mem_portB_addr];
+// end
 
 
 // 

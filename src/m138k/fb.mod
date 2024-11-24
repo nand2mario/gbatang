@@ -1,0 +1,24 @@
+-series GW5AST
+-device GW5AST-138
+-device_version B
+-package PBGA484A
+-part_number GW5AST-LV138PG484AC1/I0
+
+
+-mod_name fb
+-file_name fb
+-path F:/Gowin/dev/gbatang/src/m138k/
+-type RAM_DP
+-file_type vlg
+-bram_b true
+-dev_type GW5AST-138B
+-depth_0 38400
+-depth_1 38400
+-width_0 18
+-width_1 18
+-read_mode_0 bypass
+-read_mode_1 bypass
+-write_mode_0 normal
+-write_mode_1 normal
+-speed false
+-reset_mode sync

@@ -45,6 +45,7 @@
         <File path="src/iosys/spi_master.v" type="file.verilog" enable="1"/>
         <File path="src/iosys/spiflash.v" type="file.verilog" enable="1"/>
         <File path="src/iosys/textdisp.v" type="file.verilog" enable="1"/>
+        <File path="src/m138k/fb.v" type="file.verilog" enable="1"/>
         <File path="src/m138k/pll_27.v" type="file.verilog" enable="1"/>
         <File path="src/m138k/pll_33.v" type="file.verilog" enable="1"/>
         <File path="src/m138k/pll_74.v" type="file.verilog" enable="1"/>
@@ -68,9 +69,9 @@
         <File path="src/m138k/m138k.cst" type="file.cst" enable="1"/>
         <File path="src/m138kpro.cst" type="file.cst" enable="0"/>
         <File path="src/gbatang.sdc" type="file.sdc" enable="1"/>
-        <File path="src/gbatang.gao" type="file.gao" enable="0"/>
-        <File path="src/iosys.gao" type="file.gao" enable="0"/>
-        <File path="src/gpu.gao" type="file.gao" enable="0"/>
         <File path="src/eeprom.gao" type="file.gao" enable="0"/>
+        <File path="src/gbatang.gao" type="file.gao" enable="0"/>
+        <File path="src/gpu.gao" type="file.gao" enable="0"/>
+        <File path="src/iosys.gao" type="file.gao" enable="0"/>
     </FileList>
 </Project>
