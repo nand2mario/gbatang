@@ -1,0 +1,78 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5AT-60B" pn="GW5AT-LV60PG484AC1/I0">gw5at60b-002</Device>
+    <FileList>
+        <File path="src/common/dpram32_block.v" type="file.verilog" enable="1"/>
+        <File path="src/common/dpram_block.v" type="file.verilog" enable="1"/>
+        <File path="src/common/dual_clk_fifo.v" type="file.verilog" enable="1"/>
+        <File path="src/common/eprocreg_gba.sv" type="file.verilog" enable="1"/>
+        <File path="src/cpu/gba_cpu.v" type="file.verilog" enable="1"/>
+        <File path="src/cpu/gba_cpu_thumbdecoder.v" type="file.verilog" enable="1"/>
+        <File path="src/cpu/gba_interrupts.v" type="file.verilog" enable="1"/>
+        <File path="src/gba2hdmi.sv" type="file.verilog" enable="1"/>
+        <File path="src/gbatang_top.sv" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_drawer_merge.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_drawer_mode0.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_drawer_mode2.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_drawer_mode345.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_drawer_obj.sv" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_gpu.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_gpu_colorshade.sv" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_gpu_drawer.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_gpu_timing.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_timer.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/gba_timer_module.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/linebuffer.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/vram_hi.v" type="file.verilog" enable="1"/>
+        <File path="src/gpu/vram_lo.v" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/audio_clock_regeneration_packet.sv" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/audio_info_frame.sv" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/audio_sample_packet.sv" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/auxiliary_video_information_info_frame.sv" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/hdmi.sv" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/packet_assembler.sv" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/packet_picker.sv" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/serializer.sv" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/source_product_description_info_frame.sv" type="file.verilog" enable="1"/>
+        <File path="src/hdmi/tmds_channel.sv" type="file.verilog" enable="1"/>
+        <File path="src/iosys/gowin_dpb_menu.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/iosys.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/picorv32.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/simplespimaster.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/simpleuart.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/spi_master.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/spiflash.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/textdisp.v" type="file.verilog" enable="1"/>
+        <File path="src/m138k/fb.v" type="file.verilog" enable="1"/>
+        <File path="src/m60k/pll_27.v" type="file.verilog" enable="1"/>
+        <File path="src/m60k/pll_33.v" type="file.verilog" enable="1"/>
+        <File path="src/m60k/pll_74.v" type="file.verilog" enable="1"/>
+        <File path="src/memory/gba_dma.v" type="file.verilog" enable="1"/>
+        <File path="src/memory/gba_dma_module.sv" type="file.verilog" enable="1"/>
+        <File path="src/memory/gba_eeprom.sv" type="file.verilog" enable="1"/>
+        <File path="src/memory/gba_flash_sram.sv" type="file.verilog" enable="1"/>
+        <File path="src/memory/gba_memory.sv" type="file.verilog" enable="1"/>
+        <File path="src/memory/mem_eeprom.v" type="file.verilog" enable="1"/>
+        <File path="src/memory/mem_iwram.v" type="file.verilog" enable="1"/>
+        <File path="src/memory/rv_sdram_adapter.v" type="file.verilog" enable="1"/>
+        <File path="src/memory/sdram_gba.v" type="file.verilog" enable="1"/>
+        <File path="src/peripherals/controller_ds2.sv" type="file.verilog" enable="1"/>
+        <File path="src/peripherals/dualshock_controller.v" type="file.verilog" enable="1"/>
+        <File path="src/peripherals/gba_joypad.v" type="file.verilog" enable="1"/>
+        <File path="src/sound/gba_sound.v" type="file.verilog" enable="1"/>
+        <File path="src/sound/gba_sound_ch1.v" type="file.verilog" enable="1"/>
+        <File path="src/sound/gba_sound_ch3.v" type="file.verilog" enable="1"/>
+        <File path="src/sound/gba_sound_ch4.v" type="file.verilog" enable="1"/>
+        <File path="src/sound/gba_sound_dma.v" type="file.verilog" enable="1"/>
+        <File path="src/m138k/m138k.cst" type="file.cst" enable="1"/>
+        <File path="src/m138kpro.cst" type="file.cst" enable="0"/>
+        <File path="src/gbatang.sdc" type="file.sdc" enable="1"/>
+        <File path="src/eeprom.gao" type="file.gao" enable="0"/>
+        <File path="src/gbatang.gao" type="file.gao" enable="0"/>
+        <File path="src/gpu.gao" type="file.gao" enable="0"/>
+        <File path="src/iosys.gao" type="file.gao" enable="0"/>
+    </FileList>
+</Project>
