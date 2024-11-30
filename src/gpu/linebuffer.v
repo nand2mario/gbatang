@@ -16,11 +16,11 @@ module linebuffer #(
     input we
 );
 
-//`ifdef M138K
-//reg [DATA_WIDTH-1:0] ram[0:2**ADDR_WIDTH-1] /* synthesis syn_ramstyle = "block_ram" */;
-//`else
+`ifdef M138K
+reg [DATA_WIDTH-1:0] ram[0:2**ADDR_WIDTH-1] /* synthesis syn_ramstyle = "block_ram" */;
+`else
 reg [DATA_WIDTH-1:0] ram[0:2**ADDR_WIDTH-1] /* synthesis syn_ramstyle = "distributed_ram" */;
-//`endif
+`endif
 
 //assign rdata = ram[raddr];
 
