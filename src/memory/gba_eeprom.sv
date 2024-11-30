@@ -80,10 +80,21 @@ mem_eeprom m_eeprom (
 
 `else
 //reg [64*1024-1:0] mem /* synthesis syn_ramstyle="distributed_ram" */;  // 64Kbits of memory, 4 BRAM blocks
-
 //always @(posedge clk) begin
 //    if (mem_write) mem[fulladdr[15:0]] <= mem_din;
 //    mem_dout <= mem[fulladdr[15:0]];
+//end
+
+dpram_block #(1, 14) m_eeprom(
+    .clka(clk), .clkb(clk), 
+    .addr_a(fulladdr[13:0]), .datain_a(mem_din), .dataout_a(mem_dout), .we_a(mem_write), .re_a('1), 
+    .addr_b(), .datain_b(), .dataout_b(), .we_b('0), .re_b('0)
+);
+
+//reg [16*1024-1:0] mem;  // 16Kbits of memory, 4 BRAM blocks
+//always @(posedge clk) begin
+//    if (mem_write) mem[fulladdr[13:0]] <= mem_din;
+//    else           mem_dout <= mem[fulladdr[13:0]];
 //end
 
 `endif
