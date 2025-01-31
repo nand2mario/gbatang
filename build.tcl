@@ -1,3 +1,57 @@
+if {$argc == 0} {
+    puts "Usage: $argv0 <device>"
+    puts "          device: mega60k, mega138k, mega138kpro, console60k"
+    exit 1
+}
+
+set dev [lindex $argv 0]
+
+if {$dev eq "mega60k"} {
+    set_device GW5AT-LV60PG484AC1/I0 -device_version B
+    add_file -type cst "src/m138k/m138k.cst"
+    add_file -type sdc "src/gbatang.sdc"
+    add_file "src/m60k/config.v"
+    add_file -type verilog "src/m60k/pll_27.v"
+    add_file -type verilog "src/m60k/pll_33.v"
+    add_file -type verilog "src/m60k/pll_74.v"
+
+    set_option -output_base_name gbatang-m60k
+ } elseif {$dev eq "mega138k"} {
+    set_device GW5AST-LV138PG484AC1/I0 -device_version B
+    add_file -type cst "src/m138k/m138k.cst"
+    add_file -type sdc "src/gbatang.sdc"
+
+    add_file -type verilog "src/m138k/config.v"
+    add_file -type verilog "src/m138k/pll_27.v"
+    add_file -type verilog "src/m138k/pll_33.v"
+    add_file -type verilog "src/m138k/pll_74.v"
+
+    set_option -output_base_name gbatang-m138k
+ } elseif {$dev eq "mega138kpro"} {
+    set_device GW5AST-LV138FPG676AC1/I0 -device_version B
+    add_file -type cst "src/m138k/m138kpro.cst"
+    add_file -type sdc "src/gbatang.sdc"
+
+    add_file -type verilog "src/m138k/config.v"
+    add_file -type verilog "src/m138k/pll_27.v"
+    add_file -type verilog "src/m138k/pll_33.v"
+    add_file -type verilog "src/m138k/pll_74.v"
+
+    set_option -output_base_name gbatang-m138kpro
+ } elseif {$dev eq "console60k"} {
+    set_device GW5AT-LV60PG484AC1/I0 -device_version B
+    add_file -type cst "src/console60k/gbatang.cst"
+    add_file -type sdc "src/gbatang.sdc"
+    add_file "src/m60k/config.v"
+    add_file -type verilog "src/m60k/pll_27.v"
+    add_file -type verilog "src/m60k/pll_33.v"
+    add_file -type verilog "src/m60k/pll_74.v"
+
+    set_option -output_base_name gbatang-console60k
+ } else {
+    error "Unknown device $dev"
+}
+
 add_file -type verilog "src/common/dpram32_block.v"
 add_file -type verilog "src/common/dpram_block.v"
 add_file -type verilog "src/common/dual_clk_fifo.v"
