@@ -477,7 +477,7 @@ gba2hdmi video (
 // iosys for menu, rom loading and other functions
 ////////////////////////////
 
-iosys #(.CORE_ID(3)) iosys (
+iosys #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101)) iosys (        // logo color: 0x7761AB
     .clk(clk16), .hclk(hclk), .spi_clk(clk67), .resetn(resetn),
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),

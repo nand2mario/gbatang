@@ -43,8 +43,8 @@ module iosys #(
 
     // OSD display interface
     output overlay,
-    input [10:0] overlay_x,         // 720p
-    input [9:0] overlay_y,
+    input [7:0] overlay_x,          // 0-255
+    input [7:0] overlay_y,          // 0-223
     output [14:0] overlay_color,    // BGR5
     input [11:0] joy1,              // joystick 1: (R L X A RT LT DN UP START SELECT Y B)
     input [11:0] joy2,              // joystick 2
@@ -215,14 +215,14 @@ assign mem_rdata = ram_ready ? ram_rdata :
         32'h 0000_0000;
 
 picorv32 #(
-    .ENABLE_MUL(1),
-    .ENABLE_DIV(1),
+    .ENABLE_MUL(0),
+    .ENABLE_DIV(0),
     // .COMPRESSED_ISA(1)
     .CATCH_ILLINSN(0),
     .ENABLE_COUNTERS (0),
     .ENABLE_COUNTERS64 (0),
     .CATCH_MISALIGN (0),
-    .TWO_STAGE_SHIFT(1)
+    .TWO_STAGE_SHIFT(0)
 ) rv32 (
     .clk(clk), .resetn(resetn & flash_loaded),
     .mem_valid(mem_valid), .mem_ready(mem_ready), .mem_addr(mem_addr), 
@@ -232,7 +232,7 @@ picorv32 #(
 // text display @ 0x0200_0000
 textdisp #(.COLOR_LOGO(COLOR_LOGO)) disp (
     .clk(clk), .hclk(hclk), .resetn(resetn),
-    .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
+    .x(overlay_x), .y(overlay_y), .color(overlay_color),
     .reg_char_we(textdisp_reg_char_sel ? mem_wstrb : 4'b0),
     .reg_char_di(mem_wdata) 
 );

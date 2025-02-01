@@ -63,46 +63,32 @@ localparam int POWERUPCYCLES = $rtoi($ceil( POWERUPNS/CLKPERNS ));
 wire [9:0] cy, frameHeight;
 wire [10:0] cx, frameWidth;
 
-assign overlay_x = cx;
-assign overlay_y = cy;
-
 //
 // BRAM frame buffer
 //
-localparam MEM_DEPTH=240*160;       // 38400, 37K words, 16-bit address
-
-logic [$clog2(MEM_DEPTH)-1:0] mem_portA_addr;
 logic [17:0] mem_portA_wdata;
-logic mem_portA_we;
 
-logic [$clog2(MEM_DEPTH)-1:0] mem_portB_addr;
-logic [17:0] mem_portB_rdata;
+localparam WIDTH=240, width=240;
+localparam HEIGHT=160, height=160;
+localparam COLOR_BITS=6;
 
-logic initializing = 1;
-logic [7:0] init_y = 0;
-logic [7:0] init_x = 0; 
+localparam FB_DEPTH = WIDTH * HEIGHT;
+localparam COLOR_WIDTH = COLOR_BITS * 3;
+localparam FB_AWIDTH = $clog2(FB_DEPTH);
+// reg [COLOR_WIDTH-1:0] mem [0:FB_DEPTH-1];
+reg [FB_AWIDTH-1:0] mem_portA_addr;
+reg mem_portA_we;
+
+wire [FB_AWIDTH-1:0] mem_portB_addr;
+reg [COLOR_WIDTH-1:0] mem_portB_rdata;
 
 fb u_fb(
-    .clka(clk), .clkb(clk), .reseta('b0), .resetb(1'b0), .cea('b1), .ceb('b1), 
+    .clka(clk), .clkb(clk_pixel), .reseta('b0), .resetb(1'b0), .cea('b1), .ceb('b1), 
     // port A write
     .ada(mem_portA_addr), .douta(), .ocea(1'b0), .wrea(mem_portA_we), .dina(mem_portA_wdata),
     // port B read
     .adb(mem_portB_addr), .doutb(mem_portB_rdata), .oceb(1'b1), .wreb('b0), .dinb('b0)
 );
-
-// logic [17:0] mem [0:MEM_DEPTH-1];
-// BRAM port A read/write
-// always_ff @(posedge clk) begin
-//     if (mem_portA_we) begin
-//         mem[mem_portA_addr] <= mem_portA_wdata;
-//     end
-// end
-
-// BRAM port B read
-// always_ff @(posedge clk_pixel) begin
-//     mem_portB_rdata <= mem[mem_portB_addr];
-// end
-
 
 // 
 // Data input and initial background loading
@@ -110,29 +96,9 @@ fb u_fb(
 logic [8:0] r_scanline;
 logic [8:0] r_cycle;
 always @(posedge clk) begin
-    if (~resetn) begin
-        initializing <= 1;
-        init_y <= 0;
-        init_x <= 0;
-        mem_portA_we <= 0;
-    end else if (initializing) begin    // setup background at initialization
-        init_x <= init_x == 239 ? 0 : init_x + 1;
-        init_y <= init_x == 239 ? init_y + 1 : init_y;
-        if (init_y == 160) begin
-            initializing <= 0;
-            mem_portA_we <= 0;
-        end else begin
-            mem_portA_we <= 1;
-            mem_portA_addr <= init_y * 240 + init_x;
-            mem_portA_wdata <= 17'b100000_100000_100000;          // grey
-        end
-    end else begin
-        // debug: leave out 
-        mem_portA_we <= //pixel_x[2:0] != 0 || pixel_y[2:0] != 0 ? 
-                        pixel_we;  // : 0;
-        mem_portA_addr <= pixel_y * 240 + pixel_x;
-        mem_portA_wdata <= pixel_data;
-    end
+    mem_portA_we <= pixel_we;
+    mem_portA_addr <= pixel_y * 240 + pixel_x;
+    mem_portA_wdata <= pixel_data;
 end
 
 // audio stuff
@@ -164,74 +130,79 @@ end
 //
 // Video
 //
+reg [23:0] rgb;             // actual RGB output
+reg active                  /* xsynthesis syn_keep=1 */;
+reg [$clog2(WIDTH)-1:0] xx  /* xsynthesis syn_keep=1 */; // scaled-down pixel position
+reg [$clog2(HEIGHT)-1:0] yy /* xsynthesis syn_keep=1 */;
+reg [10:0] xcnt             /* xsynthesis syn_keep=1 */;
+reg [10:0] ycnt             /* xsynthesis syn_keep=1 */;                  // fractional scaling counters
+reg [9:0] cy_r;
+assign mem_portB_addr = yy * WIDTH + xx;
+assign overlay_x = xx;
+assign overlay_y = yy;
+localparam XSTART = (1280 - 1080) / 2;   // 1080:720 = 3:2
+localparam XSTOP = (1280 + 1080) / 2;
 
-// address generation
-// reg [8:0] cx2_orig;
-// reg [7:0] cy2_orig;
-// reg [15:0] line_start;
-// reg [7:0] line_off;
-
-reg [3:0] xcnt, ycnt;        // 0 to 8, advance on 4 and 8, scale up by 4.5
-reg [15:0] gba_addr;
-reg active, active_gba_p, active_overlay_p;
-
-// scale 240x160 4.5x to 1080*720
-// this is basically the faster version of: mem_portB_addr = cy / 4.5 * 240 + (cx - 100) / 4.5; 
+// address calculation
+// Assume the video occupies fully on the Y direction, we are upscaling the video by `720/height`.
+// xcnt and ycnt are fractional scaling counters.
 always @(posedge clk_pixel) begin
-    // increment address: 104+ 108+ 113+ 117+ ... 1175+ 1179+, 240 advances
-    xcnt <= xcnt == 8 ? 0 : xcnt + 1;
-    if (active && (xcnt == 4 || xcnt == 8)) 
-        gba_addr <= gba_addr + 1;
+    reg active_t;
+    reg [10:0] xcnt_next;
+    reg [10:0] ycnt_next;
+    xcnt_next = xcnt + (overlay ? 256 : width);
+    ycnt_next = ycnt + (overlay ? 224 : height);
 
-    if (cx == 99) begin
-        xcnt <= 0;
+    active_t = 0;
+    if (cx == XSTART - 1) begin
+        active_t = 1;
         active <= 1;
-        if (cy == 0) begin
-            gba_addr <= 0;
-            ycnt <= 0;
+    end else if (cx == XSTOP - 1) begin
+        active_t = 0;
+        active <= 0;
+    end
+
+    if (active_t | active) begin        // increment xx
+        xcnt <= xcnt_next;
+        if (xcnt_next >= 1080) begin
+            xcnt <= xcnt_next - 1080;
+            xx <= xx + 1;
         end
     end
-    if (cx == 1179) 
-        active <= 0;
-    if (cx == 1180) begin
-        ycnt <= ycnt == 8 ? 0 : ycnt + 1;
-        if (ycnt != 4 & ycnt != 8)      // repeat lines 4 or 5 times
-            gba_addr <= gba_addr - 240;
+
+    cy_r <= cy;
+    if (cy[0] != cy_r[0]) begin         // increment yy at new lines
+        ycnt <= ycnt_next;
+        if (ycnt_next >= 720) begin
+            ycnt <= ycnt_next - 720;
+            yy <= yy + 1;
+        end
     end
 
-    active_gba_p <= active & ~overlay;
-    active_overlay_p <= cx[10:8] != 0 & ~cx[10] & cy >= 24 & cy < 696 & overlay;
+    if (cx == 0) begin
+        xx <= 0;
+        xcnt <= 0;
+    end
+    
+    if (cy == 0) begin
+        yy <= 0;
+        ycnt <= 0;
+    end 
 
-
-    // this is the slower 4.5x scaler
-    // stage 1: calc div 4.5
-    // cy2_orig <= {cy, 1'b0} / 9;
-    // cx2_orig <= {cx + 2 - 100, 1'b0} / 9;
-    // stage 2: calc line start address and offset
-    // line_start <= {cy2_div45, 8'b0} - {cy2_div45, 4'b0};        // * 240
-    // line_off <= cx2_div45;
-    // active_p <= cx >= 100 & cx < 1180 & ~overlay;
-    // active_overlay_p <= cx[10:8] != 0 & ~cx[10] & cy >= 24 & cy < 696 & overlay;
-
-    // this is the faster 4x scaler
-    // cy2_orig <= (cy - 40) >> 2;
-    // cx2_orig <= (cx + 2 - 160) >> 2;
-    // line_start <= {cy2_orig, 8'b0} - {cy2_orig, 4'b0};        // * 240
-    // line_off <= cx2_orig;
-    // active_p <= cx >= 160 & cx < 1120 & cy >= 40 & cy < 680 & ~overlay;
-    // active_overlay_p <= cx[10:8] != 0 & ~cx[10] & cy >= 24 & cy < 696 & overlay;
 end
 
-// assign mem_portB_addr = line_start + line_off;
-assign mem_portB_addr = gba_addr;
-
-wire [23:0] rgb = active_gba_p ? {mem_portB_rdata[17:12], 2'b0,      // RGB6 to RGB8
-                                         mem_portB_rdata[11:6], 2'b0, 
-                                         mem_portB_rdata[5:0], 2'b0} : 
-                  active_overlay_p ? {overlay_color[4:0], 3'b0,         // BGR5 to RGB8
-                                        overlay_color[9:5], 3'b0,
-                                        overlay_color[14:10], 3'b0} :
-                  24'h303030;     // grey bars on the sides
+// calc rgb value to hdmi
+always @(posedge clk_pixel) begin
+    if (active) begin
+        if (overlay)
+            rgb <= {overlay_color[4:0],3'b0,overlay_color[9:5],3'b0,overlay_color[14:10],3'b0};       // BGR5 to RGB8
+        else
+            rgb <= {mem_portB_rdata[COLOR_BITS*2 +: COLOR_BITS], {(8-COLOR_BITS){1'b0}},
+                    mem_portB_rdata[COLOR_BITS   +: COLOR_BITS], {(8-COLOR_BITS){1'b0}},
+                    mem_portB_rdata[0            +: COLOR_BITS], {(8-COLOR_BITS){1'b0}}};    // RGB4 to RGB8
+    end else
+        rgb <= 24'h303030;
+end
 
 // HDMI output.
 logic[2:0] tmds;
