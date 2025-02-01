@@ -7,7 +7,7 @@
 
 -mod_name pll_33
 -file_name pll_33
--path F:/Gowin/dev/gbatang.current/src/m60k/
+-path F:/Gowin/dev/gbatang/src/m60k/
 -type PLL_ADV
 -file_type vlg
 -ssc false

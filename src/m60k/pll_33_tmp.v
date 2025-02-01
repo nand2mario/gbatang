@@ -5,7 +5,7 @@
 //Part Number: GW5AT-LV60PG484AC1/I0
 //Device: GW5AT-60
 //Device Version: B
-//Created Time: Sun Nov 24 18:35:02 2024
+//Created Time: Sat Feb  1 20:02:20 2025
 
 //Change the instance name and port connections to the signal names
 //--------Copy here to design--------
