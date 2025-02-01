@@ -129,6 +129,7 @@ end
 
 //
 // Video
+// Scale to 1080x720 for GBA video, 960x720 for overlay
 //
 reg [23:0] rgb;             // actual RGB output
 reg active                  /* xsynthesis syn_keep=1 */;
@@ -142,6 +143,8 @@ assign overlay_x = xx;
 assign overlay_y = yy;
 localparam XSTART = (1280 - 1080) / 2;   // 1080:720 = 3:2
 localparam XSTOP = (1280 + 1080) / 2;
+localparam XSTART_O = (1280 - 960) / 2;   // 960:720 = 4:3
+localparam XSTOP_O = (1280 + 960) / 2;
 
 // address calculation
 // Assume the video occupies fully on the Y direction, we are upscaling the video by `720/height`.
@@ -154,19 +157,26 @@ always @(posedge clk_pixel) begin
     ycnt_next = ycnt + (overlay ? 224 : height);
 
     active_t = 0;
-    if (cx == XSTART - 1) begin
+    if (~overlay && cx == XSTART - 1 || overlay && cx == XSTART_O - 1) begin
         active_t = 1;
         active <= 1;
-    end else if (cx == XSTOP - 1) begin
+    end else if (~overlay && cx == XSTOP - 1 || overlay && cx == XSTOP_O - 1) begin
         active_t = 0;
         active <= 0;
     end
 
     if (active_t | active) begin        // increment xx
         xcnt <= xcnt_next;
-        if (xcnt_next >= 1080) begin
-            xcnt <= xcnt_next - 1080;
-            xx <= xx + 1;
+        if (overlay) begin
+            if (xcnt_next >= 960) begin
+                xcnt <= xcnt_next - 960;
+                xx <= xx + 1;
+            end
+        end else begin
+            if (xcnt_next >= 1080) begin
+                xcnt <= xcnt_next - 1080;
+                xx <= xx + 1;
+            end
         end
     end
 
