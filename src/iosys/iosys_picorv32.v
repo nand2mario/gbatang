@@ -14,6 +14,8 @@
 // 
 // Author: nand2mario, 1/2024
 
+`define MCU_PICORV32
+
 `ifndef PICORV32_REGS
 `ifdef PICORV32_V
 `error "iosys.v must be read before picorv32.v!"

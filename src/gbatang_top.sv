@@ -359,17 +359,6 @@ sdram_gba sdram (
     .busy(sdram_busy)
 );
 
-rv_sdram_adapter rv_adapt (
-    .clk(clk16), .resetn(resetn), .config_backup_type(config_backup_type),
-    .rv_valid(rv_valid), .rv_addr(rv_addr), .rv_wdata(rv_wdata),
-    .rv_wstrb(rv_wstrb), .rv_ready(rv_ready), .rv_rdata(rv_rdata),
-    .mem_addr(rv_mem_addr), .mem_req(rv_mem_req), .mem_ds(rv_mem_ds),
-    .mem_din(rv_mem_din), .mem_we(rv_mem_we), .mem_req_ack(rv_mem_req_ack),
-    .mem_dout(rv_mem_dout),
-
-    .eeprom_rd(eeprom_rd), .eeprom_wr(eeprom_wr), .eeprom_addr(eeprom_addr),
-    .eeprom_rdata(eeprom_rdata), .eeprom_wdata(eeprom_wdata)
-);
 `else
 
 // model for cpu to work under verilator
@@ -477,7 +466,26 @@ gba2hdmi video (
 // iosys for menu, rom loading and other functions
 ////////////////////////////
 
-iosys #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101)) iosys (        // logo color: 0x7761AB
+`ifdef MCU_BL616
+
+iosys_bl616 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101)) iosys (
+    .clk(clk16), .hclk(hclk), .resetn(resetn),
+
+    .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
+    .joy1(joy_btns), .joy2(12'b0),
+
+`ifdef TEST_LOADER
+    .rom_loading(), .rom_do(), .rom_do_valid(), 
+`else
+    .rom_loading(loading), .rom_do(loader_do), .rom_do_valid(loader_do_valid), 
+`endif
+
+    .uart_tx(UART_TXD), .uart_rx(UART_RXD)
+);
+
+`else
+
+iosys_picorv32 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101)) iosys (        // logo color: 0x7761AB
     .clk(clk16), .hclk(hclk), .spi_clk(clk67), .resetn(resetn),
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
@@ -503,6 +511,20 @@ iosys #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101)) iosys (        // logo 
     .sd_clk(sd_clk), .sd_cmd(sd_cmd), .sd_dat0(sd_dat0), .sd_dat1(sd_dat1),
     .sd_dat2(sd_dat2), .sd_dat3(sd_dat3)
 );
+
+rv_sdram_adapter rv_adapt (
+    .clk(clk16), .resetn(resetn), .config_backup_type(config_backup_type),
+    .rv_valid(rv_valid), .rv_addr(rv_addr), .rv_wdata(rv_wdata),
+    .rv_wstrb(rv_wstrb), .rv_ready(rv_ready), .rv_rdata(rv_rdata),
+    .mem_addr(rv_mem_addr), .mem_req(rv_mem_req), .mem_ds(rv_mem_ds),
+    .mem_din(rv_mem_din), .mem_we(rv_mem_we), .mem_req_ack(rv_mem_req_ack),
+    .mem_dout(rv_mem_dout),
+
+    .eeprom_rd(eeprom_rd), .eeprom_wr(eeprom_wr), .eeprom_addr(eeprom_addr),
+    .eeprom_rdata(eeprom_rdata), .eeprom_wdata(eeprom_wdata)
+);
+
+`endif
 
 `ifdef TEST_LOADER
 // test rom, start loading once sdram is ready
