@@ -1,12 +1,17 @@
 if {$argc == 0} {
-    puts "Usage: $argv0 <device> <mcu>"
+    puts "Usage: $argv0 <device> [<mcu>]"
     puts "          device: mega60k, mega138k, mega138kpro, console60k"
     puts "          mcu: bl616, picorv32"
     exit 1
 }
 
 set dev [lindex $argv 0]
-set mcu [lindex $argv 1]
+
+if {$argc >= 2} {
+    set mcu [lindex $argv 1]
+} else {
+    set mcu "bl616"
+}
 
 if {$dev eq "mega60k"} {
     set_device GW5AT-LV60PG484AC1/I0 -device_version B
@@ -56,7 +61,7 @@ if {$dev eq "mega60k"} {
 
 if {$mcu eq "bl616"} {
    add_file -type verilog "src/iosys/iosys_bl616.v"
-   add_file -type verilog "src/iosys/uart_fractional.v"
+   add_file -type verilog "src/iosys/uart_fixed.v"
 } elseif {$mcu eq "picorv32"} {
    add_file -type verilog "src/iosys/iosys_picorv32.v"
    add_file -type verilog "src/iosys/picorv32.v"
@@ -139,6 +144,6 @@ set_option -use_mspi_as_gpio 1
 set_option -use_cpu_as_gpio 1
 
 # use the slower but timing-optimized place algorithm
-set_option -place_option 2
+set_option -place_option 3
 
 run all

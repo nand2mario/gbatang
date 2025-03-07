@@ -1,6 +1,8 @@
 
+@REM 'x REG unPlaced' problem:
+@REM 1.9.11 placement algo 3 works
 
-set GWSH=..\..\Gowin_V1.9.10.03_x64\IDE\bin\gw_sh
+set GWSH=\Gowin\Gowin_V1.9.10.03_x64\IDE\bin\gw_sh
 
 echo
 echo "============ Building console60k ==============="

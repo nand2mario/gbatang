@@ -32,7 +32,7 @@
 // design are read in the correct order.
 `define PICOSOC_V
 
-module iosys #(
+module iosys_picorv32 #(
     parameter FREQ=21_477_000,
     parameter [14:0] COLOR_LOGO=15'b00000_10101_00000,
     parameter [15:0] CORE_ID=1      // 1: nestang, 2: snestang
@@ -40,7 +40,7 @@ module iosys #(
 (
     input clk,                      // SNES mclk
     input hclk,                     // hdmi clock
-    input spi_clk,                  // clock for SD SPI (4x clk)
+//    input clkref,                   // 1/2 of mclk, for sdram access synchronization
     input resetn,
 
     // OSD display interface
@@ -52,11 +52,9 @@ module iosys #(
     input [11:0] joy2,              // joystick 2
 
     // ROM loading interface
-    output reg [2:0] rom_loading,   // 0: idle, 1: rom loading, 2: cart ram loading, 3: configuration, 4: BIOS loading
+    output reg rom_loading,         // 0-to-1 loading starts, 1-to-0 loading is finished
     output [7:0] rom_do,            // first 64 bytes are snes header + 32 bytes after snes header 
     output reg rom_do_valid,        // strobe for rom_do
-    input      cartram_dirty,       // cartridge RAM is dirty, needs persistence, content accessible at 0x700000
-    output reg cartram_dirty_clear,
     
     // 32-bit wide memory interface for risc-v softcore
     // 0x_xxxx~6x_xxxx is RV RAM, 7x_xxxx is BSRAM
@@ -109,15 +107,14 @@ reg [3:0] flash_wstrb;
 reg flash_wr;
 wire [31:0] spiflash_reg_do;
 wire spiflash_reg_wait;
-reg flash_wait;
 
 always @(posedge clk) begin
     if (~resetn) begin
         flash_loaded <= 0;
         flash_addr = {21{1'b1}};
-        flash_wr <= 0;
     end else begin
         flash_start <= 0;
+        flash_wr <= 0;
 
         if (~flash_loaded && ~flash_loading && ~ram_busy) begin
             // start loading
@@ -126,17 +123,11 @@ always @(posedge clk) begin
         end
 
         if (flash_loading) begin
-            if (flash_wait) begin
-                if (rv_ready) begin
-                    flash_wait <= 0;
-                    flash_wr <= 0;
-                end
-            end else if (flash_out_strb) begin
+            if (flash_out_strb) begin
                 reg [20:0] next_addr = flash_addr + 1;
                 flash_addr <= next_addr;
                 flash_d <= flash_dout;
                 flash_wr <= 1;
-                flash_wait <= 1;
 
                 case (next_addr[1:0])
                 2'b00: flash_wstrb <= 4'b0001;
@@ -155,33 +146,33 @@ always @(posedge clk) begin
 end
 
 // picorv32 softcore
-wire mem_valid        /* xsynthesis syn_keep=1 */;
-wire mem_ready        /* xsynthesis syn_keep=1 */;
-wire [31:0] mem_addr  /* xsynthesis syn_keep=1 */;
-wire [31:0] mem_wdata /* xsynthesis syn_keep=1 */;
-wire [3:0]  mem_wstrb /* xsynthesis syn_keep=1 */;
-wire [31:0] mem_rdata /* xsynthesis syn_keep=1 */;
-reg ram_ready         /* xsynthesis syn_keep=1 */;
+wire mem_valid /* synthesis syn_keep=1 */;
+wire mem_ready;
+wire [31:0] mem_addr /* synthesis syn_keep=1 */, mem_wdata /* synthesis syn_keep=1 */;
+wire [3:0] mem_wstrb /* synthesis syn_keep=1 */;
+wire [31:0] mem_rdata /* synthesis syn_keep=1 */;
+
+reg ram_ready /* synthesis syn_keep=1 */;
 reg [31:0] ram_rdata;
 
 wire        ram_sel = mem_valid && mem_addr[31:23] == 0;
 
-wire        textdisp_reg_char_sel /* xsynthesis syn_keep=1 */= mem_valid && (mem_addr == 32'h 0200_0000);
+wire        textdisp_reg_char_sel /* synthesis syn_keep=1 */= mem_valid && (mem_addr == 32'h 0200_0000);
 
 wire        simpleuart_reg_div_sel = mem_valid && (mem_addr == 32'h 0200_0010);
 wire [31:0] simpleuart_reg_div_do;
 
-wire        simpleuart_reg_dat_sel /* xsynthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h 0200_0014);
+wire        simpleuart_reg_dat_sel /* synthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h 0200_0014);
 wire [31:0] simpleuart_reg_dat_do;
 wire        simpleuart_reg_dat_wait;
 
-wire        simplespimaster_reg_byte_sel /* xsynthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h0200_0020);
-wire        simplespimaster_reg_word_sel /* xsynthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h0200_0024);
+wire        simplespimaster_reg_byte_sel /* synthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h0200_0020);
+wire        simplespimaster_reg_word_sel /* synthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h0200_0024);
 wire [31:0] simplespimaster_reg_do;
-wire        simplespimaster_reg_wait /* xsynthesis syn_keep=1 */;
+wire        simplespimaster_reg_wait /* synthesis syn_keep=1 */;
 
-wire        romload_reg_ctrl_sel /* xsynthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h 0200_0030);       // write 1 to start loading, 0 to finish loading
-wire        romload_reg_data_sel /* xsynthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h 0200_0034);       // write once to load 4 bytes
+wire        romload_reg_ctrl_sel /* synthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h 0200_0030);       // write 1 to start loading, 0 to finish loading
+wire        romload_reg_data_sel /* synthesis syn_keep=1 */ = mem_valid && (mem_addr == 32'h 0200_0034);       // write once to load 4 bytes
 
 wire        joystick_reg_sel = mem_valid && (mem_addr == 32'h 0200_0040);
 
@@ -194,15 +185,12 @@ wire        spiflash_reg_byte_sel = mem_valid && (mem_addr == 32'h0200_0070);
 wire        spiflash_reg_word_sel = mem_valid && (mem_addr == 32'h0200_0074);
 wire        spiflash_reg_ctrl_sel = mem_valid && (mem_addr == 32'h0200_0078);
 
-wire        cartram_reg_sel = mem_valid && (mem_addr == 32'h 0200_0080);
-
 assign mem_ready = ram_ready || textdisp_reg_char_sel || simpleuart_reg_div_sel || 
             romload_reg_ctrl_sel || romload_reg_data_sel || joystick_reg_sel || time_reg_sel || cycle_reg_sel || id_reg_sel ||
             (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait) ||
             ((simplespimaster_reg_byte_sel || simplespimaster_reg_word_sel) && !simplespimaster_reg_wait) ||
             (spiflash_reg_byte_sel || spiflash_reg_word_sel) && !spiflash_reg_wait ||
-            spiflash_reg_ctrl_sel ||
-            cartram_reg_sel;
+            spiflash_reg_ctrl_sel;
 
 assign mem_rdata = ram_ready ? ram_rdata :
         joystick_reg_sel ? {4'b0, joy2, 4'b0, joy1} :
@@ -213,12 +201,11 @@ assign mem_rdata = ram_ready ? ram_rdata :
         id_reg_sel ? {16'b0, CORE_ID} :
         (simplespimaster_reg_byte_sel | simplespimaster_reg_word_sel) ? simplespimaster_reg_do : 
         (spiflash_reg_byte_sel | spiflash_reg_word_sel) ? spiflash_reg_do :
-        cartram_reg_sel ? cartram_dirty :
         32'h 0000_0000;
 
 picorv32 #(
-    .ENABLE_MUL(0),
-    .ENABLE_DIV(0),
+    // .ENABLE_MUL(1),
+    // .ENABLE_DIV(1),
     // .COMPRESSED_ISA(1)
     .CATCH_ILLINSN(0),
     .ENABLE_COUNTERS (0),
@@ -280,7 +267,7 @@ assign sd_dat1 = 1;
 assign sd_dat2 = 1;
 assign sd_dat3 = 0;
 simplespimaster simplespi (
-    .clk(clk), .spi_clk(spi_clk), .resetn(resetn),
+    .clk(clk), .resetn(resetn),
     .sck(sd_clk), .mosi(sd_cmd), .miso(sd_dat0),
     .reg_byte_we(simplespimaster_reg_byte_sel ? mem_wstrb[0] : 1'b0),
     .reg_word_we(simplespimaster_reg_word_sel ? mem_wstrb[0] : 1'b0),
@@ -310,14 +297,11 @@ end
 always @(posedge clk) begin
     if (romload_reg_ctrl_sel && mem_wstrb) begin
         // control register
-        rom_loading <= mem_wdata[2:0];
-    end
-end
-always @(posedge clk) begin         // clear cartram_dirty when register is written to
-    cartram_dirty_clear <= 0;
-    if (cartram_reg_sel && mem_wstrb) begin
-        cartram_dirty_clear <= 1;
-    end
+        if (mem_wdata[7:0] == 8'd1)
+            rom_loading <= 1;
+        if (mem_wdata[7:0] == 8'd0)
+            rom_loading <= 0;
+    end    
 end
 
 // SPI flash @ 0x02000_0070

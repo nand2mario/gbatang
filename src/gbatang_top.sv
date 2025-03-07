@@ -468,7 +468,7 @@ gba2hdmi video (
 
 `ifdef MCU_BL616
 
-iosys_bl616 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101)) iosys (
+iosys_bl616 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101), .FREQ(16_650_000)) iosys (
     .clk(clk16), .hclk(hclk), .resetn(resetn),
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),

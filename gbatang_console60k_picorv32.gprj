@@ -5,11 +5,12 @@
     <Version>5</Version>
     <Device name="GW5AT-60B" pn="GW5AT-LV60PG484AC1/I0">gw5at60b-002</Device>
     <FileList>
-        <File path="src/iosys/iosys_bl616.v" type="file.verilog" enable="1"/>
         <File path="src/common/dpram32_block.v" type="file.verilog" enable="1"/>
         <File path="src/common/dpram_block.v" type="file.verilog" enable="1"/>
         <File path="src/common/dual_clk_fifo.v" type="file.verilog" enable="1"/>
         <File path="src/common/eprocreg_gba.sv" type="file.verilog" enable="1"/>
+        <File path="src/iosys/iosys_picorv32.v" type="file.verilog" enable="1"/>
+
         <File path="src/cpu/gba_cpu.v" type="file.verilog" enable="1"/>
         <File path="src/cpu/gba_cpu_thumbdecoder.v" type="file.verilog" enable="1"/>
         <File path="src/cpu/gba_interrupts.v" type="file.verilog" enable="1"/>
@@ -40,8 +41,12 @@
         <File path="src/hdmi/source_product_description_info_frame.sv" type="file.verilog" enable="1"/>
         <File path="src/hdmi/tmds_channel.sv" type="file.verilog" enable="1"/>
         <File path="src/iosys/gowin_dpb_menu.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/picorv32.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/simplespimaster.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/simpleuart.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/spi_master.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/spiflash.v" type="file.verilog" enable="1"/>
         <File path="src/iosys/textdisp.v" type="file.verilog" enable="1"/>
-        <File path="src/iosys/uart_fixed.v" type="file.verilog" enable="1"/>
         <File path="src/m138k/fb.v" type="file.verilog" enable="1"/>
         <File path="src/m60k/pll_27.v" type="file.verilog" enable="1"/>
         <File path="src/m60k/pll_33.v" type="file.verilog" enable="1"/>
