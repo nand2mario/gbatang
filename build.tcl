@@ -21,8 +21,6 @@ if {$dev eq "mega60k"} {
     add_file -type verilog "src/m60k/pll_27.v"
     add_file -type verilog "src/m60k/pll_33.v"
     add_file -type verilog "src/m60k/pll_74.v"
-
-    set_option -output_base_name gbatang-m60k-${mcu}
  } elseif {$dev eq "mega138k"} {
     set_device GW5AST-LV138PG484AC1/I0 -device_version B
     add_file -type cst "src/m138k/m138k.cst"
@@ -32,8 +30,6 @@ if {$dev eq "mega60k"} {
     add_file -type verilog "src/m138k/pll_27.v"
     add_file -type verilog "src/m138k/pll_33.v"
     add_file -type verilog "src/m138k/pll_74.v"
-
-    set_option -output_base_name gbatang-m138k-${mcu}
  } elseif {$dev eq "mega138kpro"} {
     set_device GW5AST-LV138FPG676AC1/I0 -device_version B
     add_file -type cst "src/m138k/m138kpro.cst"
@@ -43,8 +39,6 @@ if {$dev eq "mega60k"} {
     add_file -type verilog "src/m138k/pll_27.v"
     add_file -type verilog "src/m138k/pll_33.v"
     add_file -type verilog "src/m138k/pll_74.v"
-
-    set_option -output_base_name gbatang-m138kpro-${mcu}
  } elseif {$dev eq "console60k"} {
     set_device GW5AT-LV60PG484AC1/I0 -device_version B
     add_file -type cst "src/console60k/gbatang.cst"
@@ -53,11 +47,12 @@ if {$dev eq "mega60k"} {
     add_file -type verilog "src/m60k/pll_27.v"
     add_file -type verilog "src/m60k/pll_33.v"
     add_file -type verilog "src/m60k/pll_74.v"
-
-    set_option -output_base_name gbatang-console60k-${mcu}
  } else {
     error "Unknown device $dev"
 }
+
+set_option -output_base_name gbatang_${dev}
+
 
 if {$mcu eq "bl616"} {
    add_file -type verilog "src/iosys/iosys_bl616.v"
