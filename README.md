@@ -9,25 +9,11 @@ The core outputs 720p HDMI video, accepts DS2 controller input, and supports all
 
 Things-to-do on my list include SNES controller input, and further game compatibility fixes (currently 90 out of top 100 games work).
 
-Follow [me](https://x.com/nand2mario) on X to get updates. Also check out other cores in the series: [SNESTang](https://github.com/nand2mario/snestang) and [NESTang](https://github.com/nand2mario/nestang), and [MDTang](https://github.com/nand2mario/mdtang).
+GBATang is part of [TangCore](https://github.com/nand2mario/tangcore), along with [SNESTang](https://github.com/nand2mario/snestang), [NESTang](https://github.com/nand2mario/nestang) and [MDTang](https://github.com/nand2mario/mdtang).
 
 ## Instructions
 
-You need the Tang Mega 60K, Tang Mega 138K or Tang Mega 138K Pro board. You also need a [Tang DS2 Pmod](https://wiki.sipeed.com/hardware/en/tang/tang-PMOD/FPGA_PMOD.html), a [Tang SDRAM Pmod](https://wiki.sipeed.com/hardware/en/tang/tang-PMOD/FPGA_PMOD.html), a [DS2 controller](https://en.wikipedia.org/wiki/DualShock), and finally a MicroSD card. Then assemble the parts as shown in the picture above.
-
-Then follow these steps to install the core (for detailed instructions, for now refer to [SNESTang installation](https://github.com/nand2mario/snestang/blob/main/doc/installation.md)),
-
-1. Download and install [Gowin IDE 1.9.9](https://cdn.gowinsemi.com.cn/Gowin_V1.9.9_x64_win.zip).
-
-2. Download a [GBATang release](https://github.com/nand2mario/gbatang/releases).
-
-3. Use Gowin programmer to program `firmware.bin` to on-board flash, at starting address **0x500000**.
-
-4. Again use Gowin programmer. Program `gbatang_*.fs` to on-board flash at starting address 0x000000.
-
-5. Put GBA roms and GBA BIOS on the MicroSD card. The 16KB GBA BIOS ROM should be named `gba_bios.bin` and placed at the root dir. Then insert the card into the on-board MicroSD slot and power up the board.
-
-6. Game progress saving is implemented in version 0.5. It is off by default and can be turned on in options.
+To install GBATang, follow the [TangCore](https://github.com/nand2mario/tangcore) installation instructions.
 
 ## About this project
 
