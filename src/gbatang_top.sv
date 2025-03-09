@@ -425,6 +425,8 @@ controller_ds2 ds2 (
 wire [11:0] joy_btns_gba = joy_btns;
 `endif
 
+wire [11:0] hid1, hid2;
+
 gba_joypad joypad (
     .mclk(clk16), /*.fclk(clk33),*/ `GB_BUS_PORTS_INST, .IRP_Joypad(IRP_Joypad),
     .KeyA(joy_btns_gba[8]), .KeyB(joy_btns_gba[0]), .KeySelect(joy_btns_gba[2]), .KeyStart(joy_btns_gba[3]), 
@@ -444,7 +446,7 @@ wire overlay;
 wire [10:0] overlay_x;
 wire [14:0] overlay_color;
 wire [9:0] overlay_y;
-assign joy_btns_gba = overlay ? 0 : joy_btns;
+assign joy_btns_gba = overlay ? 0 : joy_btns | hid1 | hid2;
 
 gba2hdmi video (
 	.clk(clk50), .resetn(resetn),
@@ -473,6 +475,7 @@ iosys_bl616 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101), .FREQ(16_650_000)
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
     .joy1(joy_btns), .joy2(12'b0),
+    .hid1(hid1), .hid2(hid2),
 
 `ifdef TEST_LOADER
     .rom_loading(), .rom_do(), .rom_do_valid(), 
