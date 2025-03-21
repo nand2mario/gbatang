@@ -3,7 +3,9 @@
 
 module gba2hdmi (
 	input clk,      // clock
+    input clk27,
 	input resetn,
+    output clk_pixel,
 
     // gba video signals
     input [17:0] pixel_data,    // RGB6
@@ -20,10 +22,6 @@ module gba2hdmi (
     output [10:0] overlay_x,
     output [9:0] overlay_y,
     input [15:0] overlay_color,
-
-	// video clocks
-	input clk_pixel,
-	input clk_5x_pixel,
 
     // output [7:0] led,
 
@@ -58,6 +56,8 @@ localparam AUDIO_BIT_WIDTH = 16;
 localparam POWERUPNS = 100000000.0;
 localparam CLKPERNS = (1.0/CLKFRQ)*1000000.0;
 localparam int POWERUPCYCLES = $rtoi($ceil( POWERUPNS/CLKPERNS ));
+
+pll_74 pll74(.clkin(clk27), .clkout0(clk_pixel), .clkout1(clk_5x_pixel));
 
 // video stuff
 wire [9:0] cy, frameHeight;

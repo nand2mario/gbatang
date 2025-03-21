@@ -5,7 +5,6 @@
     <Version>5</Version>
     <Device name="GW5AT-60B" pn="GW5AT-LV60PG484AC1/I0">gw5at60b-002</Device>
     <FileList>
-        <File path="src/iosys/iosys_bl616.v" type="file.verilog" enable="1"/>
         <File path="src/common/dpram32_block.v" type="file.verilog" enable="1"/>
         <File path="src/common/dpram_block.v" type="file.verilog" enable="1"/>
         <File path="src/common/dual_clk_fifo.v" type="file.verilog" enable="1"/>
@@ -13,7 +12,10 @@
         <File path="src/cpu/gba_cpu.v" type="file.verilog" enable="1"/>
         <File path="src/cpu/gba_cpu_thumbdecoder.v" type="file.verilog" enable="1"/>
         <File path="src/cpu/gba_interrupts.v" type="file.verilog" enable="1"/>
+        <File path="src/ddr3_framebuffer.v" type="file.verilog" enable="1"/>
+        <File path="src/ddr3_memory_interface/ddr3_memory_interface.v" type="file.verilog" enable="1"/>
         <File path="src/gba2hdmi.sv" type="file.verilog" enable="1"/>
+        <File path="src/gba2hdmi_ddr3.sv" type="file.verilog" enable="1"/>
         <File path="src/gbatang_top.sv" type="file.verilog" enable="1"/>
         <File path="src/gpu/gba_drawer_merge.v" type="file.verilog" enable="1"/>
         <File path="src/gpu/gba_drawer_mode0.v" type="file.verilog" enable="1"/>
@@ -40,12 +42,17 @@
         <File path="src/hdmi/source_product_description_info_frame.sv" type="file.verilog" enable="1"/>
         <File path="src/hdmi/tmds_channel.sv" type="file.verilog" enable="1"/>
         <File path="src/iosys/gowin_dpb_menu.v" type="file.verilog" enable="1"/>
+        <File path="src/iosys/iosys_bl616.v" type="file.verilog" enable="1"/>
         <File path="src/iosys/textdisp.v" type="file.verilog" enable="1"/>
         <File path="src/iosys/uart_fixed.v" type="file.verilog" enable="1"/>
         <File path="src/m138k/fb.v" type="file.verilog" enable="1"/>
+        <File path="src/m60k/config.v" type="file.verilog" enable="1"/>
         <File path="src/m60k/pll_27.v" type="file.verilog" enable="1"/>
         <File path="src/m60k/pll_33.v" type="file.verilog" enable="1"/>
-        <File path="src/m60k/pll_74.v" type="file.verilog" enable="1"/>
+        <File path="src/m60k/pll_74.v" type="file.verilog" enable="0"/>
+        <File path="src/m60k/pll_ddr3.v" type="file.verilog" enable="1"/>
+        <File path="src/m60k/pll_hdmi.v" type="file.verilog" enable="1"/>
+        <File path="src/m60k/pll_mDRP_intf.v" type="file.verilog" enable="1"/>
         <File path="src/memory/gba_dma.v" type="file.verilog" enable="1"/>
         <File path="src/memory/gba_dma_module.sv" type="file.verilog" enable="1"/>
         <File path="src/memory/gba_eeprom.sv" type="file.verilog" enable="1"/>

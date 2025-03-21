@@ -15,7 +15,7 @@ if {$argc >= 2} {
 
 if {$dev eq "mega60k"} {
     set_device GW5AT-LV60PG484AC1/I0 -device_version B
-    add_file -type cst "src/m138k/m138k.cst"
+    add_file -type cst "src/m60k/m60k.cst"
     add_file -type sdc "src/gbatang.sdc"
     add_file "src/m60k/config.v"
     add_file -type verilog "src/m60k/pll_27.v"

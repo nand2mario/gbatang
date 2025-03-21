@@ -67,7 +67,7 @@ reg out1;               // always output 1 when IDLE
 
 assign dout = out1 ? 1'b1 : mem_dout;
 
-`ifdef M138K
+//`ifdef M138K
 
 mem_eeprom m_eeprom (
     .clka(clk), .cea(1'b1), .reseta(rst),
@@ -78,18 +78,19 @@ mem_eeprom m_eeprom (
     .doutb(rv_rdata), .dinb(rv_wdata)
 );
 
-`else
+
+//`else
 //reg [64*1024-1:0] mem /* synthesis syn_ramstyle="distributed_ram" */;  // 64Kbits of memory, 4 BRAM blocks
 //always @(posedge clk) begin
 //    if (mem_write) mem[fulladdr[15:0]] <= mem_din;
 //    mem_dout <= mem[fulladdr[15:0]];
 //end
 
-dpram_block #(1, 14) m_eeprom(
-    .clka(clk), .clkb(clk), 
-    .addr_a(fulladdr[13:0]), .datain_a(mem_din), .dataout_a(mem_dout), .we_a(mem_write), .re_a('1), 
-    .addr_b(), .datain_b(), .dataout_b(), .we_b('0), .re_b('0)
-);
+//dpram_block #(1, 14) m_eeprom(
+//    .clka(clk), .clkb(clk), 
+//    .addr_a(fulladdr[13:0]), .datain_a(mem_din), .dataout_a(mem_dout), .we_a(mem_write), .re_a('1), 
+//    .addr_b(), .datain_b(), .dataout_b(), .we_b('0), .re_b('0)
+//);
 
 //reg [16*1024-1:0] mem;  // 16Kbits of memory, 4 BRAM blocks
 //always @(posedge clk) begin
@@ -97,7 +98,7 @@ dpram_block #(1, 14) m_eeprom(
 //    else           mem_dout <= mem[fulladdr[13:0]];
 //end
 
-`endif
+//`endif
 
 reg [3:0] state;
 reg [3:0] cnt;

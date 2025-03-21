@@ -4,6 +4,10 @@
 // uncomment this to use test rom instead of iosys menu system
 //`define TEST_LOADER
 
+`ifndef CONFIG_H
+`error("config.v has to be processed before gbatang_top.sv")
+`endif
+
 module gbatang_top (
 
 `ifndef VERILATOR
@@ -42,6 +46,25 @@ module gbatang_top (
     output [1:0] O_sdram_dqm,       // 
     output [1:0] O_sdram_ba,        // 4 banks
 
+`ifdef M60K
+    // DDR3 interface
+    output [14:0] ddr_addr,
+    output [2:0] ddr_bank,
+    output ddr_cs,
+    output ddr_ras,
+    output ddr_cas,
+    output ddr_we,
+    output ddr_ck,
+    output ddr_ck_n,
+    output ddr_cke,
+    output ddr_odt,
+    output ddr_reset_n,
+    output [1:0] ddr_dm,
+    inout [15:0] ddr_dq,
+    inout [1:0] ddr_dqs,
+    inout [1:0] ddr_dqs_n,
+`endif
+
     // UART
     input UART_RXD,
     output UART_TXD,    
@@ -72,6 +95,7 @@ module gbatang_top (
 // Clocking
 `ifndef VERILATOR
 wire clk27;         // intermediate 27Mhz clock for HDMI
+wire clk74;
 // wire clk105;
 // OSC #(.FREQ_DIV(2)) osc (.OSCOUT(clk105));
 // pll_27 pll27(.clkin(clk105), .clkout0(clk27));
@@ -80,9 +104,8 @@ pll_27 pll27(.clkin(sysclk), .clkout0(clk27));
 wire clk16;         // main clock: 16.7Mhz GBA CPU clock
 wire clk50;         // ppu clock:  3 x 16.7Mhz
 wire clk67, clk67_p;// ram clock:  67.2Mhz
-wire hclk, hclk5;   // 74.25Mhz hdmi 720p pixel clock
+wire hclk;          // 74.25Mhz hdmi 720p pixel clock
 pll_33 pll33(.clkin(clk27), .clkout0(clk50), .clkout1(clk16), .clkout2(clk67), .clkout3(clk67_p));
-pll_74 pll74(.clkin(clk27), .clkout0(hclk), .clkout1(hclk5));
 assign O_sdram_clk = clk67_p;
 
 wire [2:0]  loading;
@@ -448,9 +471,24 @@ wire [14:0] overlay_color;
 wire [9:0] overlay_y;
 assign joy_btns_gba = overlay ? 0 : joy_btns | hid1 | hid2;
 
-gba2hdmi video (
-	.clk(clk50), .resetn(resetn),
-	.clk_pixel(hclk), .clk_5x_pixel(hclk5),
+`ifdef M60K
+gba2hdmi_ddr3 video (       // DDR3-based framebuffer
+	.clk(clk50), .clk27(clk27), .resetn(resetn), .clk_pixel(hclk),
+    .pixel_data(pixel_out_data), .pixel_x(pixel_out_x), .pixel_y(pixel_out_y),
+    .pixel_we(pixel_out_we),
+    .sound_left(sound_out_left), .sound_right(sound_out_right),
+    .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
+
+    .ddr_addr(ddr_addr), .ddr_bank(ddr_bank), .ddr_cs(ddr_cs), .ddr_ras(ddr_ras), .ddr_cas(ddr_cas),
+    .ddr_we(ddr_we), .ddr_ck(ddr_ck), .ddr_ck_n(ddr_ck_n), .ddr_cke(ddr_cke), .ddr_odt(ddr_odt),
+    .ddr_reset_n(ddr_reset_n), .ddr_dm(ddr_dm), .ddr_dq(ddr_dq), .ddr_dqs(ddr_dqs), .ddr_dqs_n(ddr_dqs_n),
+
+	.tmds_clk_n(tmds_clk_n), .tmds_clk_p(tmds_clk_p), .tmds_d_n(tmds_d_n),
+	.tmds_d_p(tmds_d_p)
+);
+`else
+gba2hdmi video (            // BRAM-based framebuffer
+	.clk(clk50), .clk27(clk27), .resetn(resetn), .clk_pixel(hclk),
     .pixel_data(pixel_out_data), .pixel_x(pixel_out_x), .pixel_y(pixel_out_y),
     .pixel_we(pixel_out_we),
     .sound_left(sound_out_left), .sound_right(sound_out_right),
@@ -463,12 +501,13 @@ gba2hdmi video (
 	.tmds_clk_n(tmds_clk_n), .tmds_clk_p(tmds_clk_p), .tmds_d_n(tmds_d_n),
 	.tmds_d_p(tmds_d_p)
 );
+`endif
 
 ////////////////////////////
 // iosys for menu, rom loading and other functions
 ////////////////////////////
 
-`ifdef MCU_BL616
+// `ifdef MCU_BL616
 
 iosys_bl616 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101), .FREQ(16_650_000)) iosys (
     .clk(clk16), .hclk(hclk), .resetn(resetn),
@@ -486,48 +525,48 @@ iosys_bl616 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101), .FREQ(16_650_000)
     .uart_tx(UART_TXD), .uart_rx(UART_RXD)
 );
 
-`else
+// `else
 
-iosys_picorv32 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101)) iosys (        // logo color: 0x7761AB
-    .clk(clk16), .hclk(hclk), .spi_clk(clk67), .resetn(resetn),
+// iosys_picorv32 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101)) iosys (        // logo color: 0x7761AB
+//     .clk(clk16), .hclk(hclk), .spi_clk(clk67), .resetn(resetn),
 
-    .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
-    .joy1(joy_btns), .joy2(12'b0),
+//     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
+//     .joy1(joy_btns), .joy2(12'b0),
 
-`ifdef TEST_LOADER
-    .rom_loading(), .rom_do(), .rom_do_valid(), 
-`else
-    .rom_loading(loading), .rom_do(loader_do), .rom_do_valid(loader_do_valid), 
-`endif
-    .cartram_dirty(cartram_dirty), .cartram_dirty_clear(cartram_dirty_clear),
-    .ram_busy(sdram_busy),
+// `ifdef TEST_LOADER
+//     .rom_loading(), .rom_do(), .rom_do_valid(), 
+// `else
+//     .rom_loading(loading), .rom_do(loader_do), .rom_do_valid(loader_do_valid), 
+// `endif
+//     .cartram_dirty(cartram_dirty), .cartram_dirty_clear(cartram_dirty_clear),
+//     .ram_busy(sdram_busy),
 
-    .rv_valid(rv_valid), .rv_ready(rv_ready), .rv_addr(rv_addr), .rv_wdata(rv_wdata), 
-    .rv_wstrb(rv_wstrb), .rv_rdata(rv_rdata), 
+//     .rv_valid(rv_valid), .rv_ready(rv_ready), .rv_addr(rv_addr), .rv_wdata(rv_wdata), 
+//     .rv_wstrb(rv_wstrb), .rv_rdata(rv_rdata), 
 
-    .flash_spi_cs_n(flash_spi_cs_n), .flash_spi_miso(flash_spi_miso),
-    .flash_spi_mosi(flash_spi_mosi), .flash_spi_clk(flash_spi_clk),
-    .flash_spi_wp_n(flash_spi_wp_n), .flash_spi_hold_n(flash_spi_hold_n),
+//     .flash_spi_cs_n(flash_spi_cs_n), .flash_spi_miso(flash_spi_miso),
+//     .flash_spi_mosi(flash_spi_mosi), .flash_spi_clk(flash_spi_clk),
+//     .flash_spi_wp_n(flash_spi_wp_n), .flash_spi_hold_n(flash_spi_hold_n),
 
-    .uart_tx(UART_TXD), .uart_rx(UART_RXD),
+//     .uart_tx(UART_TXD), .uart_rx(UART_RXD),
 
-    .sd_clk(sd_clk), .sd_cmd(sd_cmd), .sd_dat0(sd_dat0), .sd_dat1(sd_dat1),
-    .sd_dat2(sd_dat2), .sd_dat3(sd_dat3)
-);
+//     .sd_clk(sd_clk), .sd_cmd(sd_cmd), .sd_dat0(sd_dat0), .sd_dat1(sd_dat1),
+//     .sd_dat2(sd_dat2), .sd_dat3(sd_dat3)
+// );
 
-rv_sdram_adapter rv_adapt (
-    .clk(clk16), .resetn(resetn), .config_backup_type(config_backup_type),
-    .rv_valid(rv_valid), .rv_addr(rv_addr), .rv_wdata(rv_wdata),
-    .rv_wstrb(rv_wstrb), .rv_ready(rv_ready), .rv_rdata(rv_rdata),
-    .mem_addr(rv_mem_addr), .mem_req(rv_mem_req), .mem_ds(rv_mem_ds),
-    .mem_din(rv_mem_din), .mem_we(rv_mem_we), .mem_req_ack(rv_mem_req_ack),
-    .mem_dout(rv_mem_dout),
+// rv_sdram_adapter rv_adapt (
+//     .clk(clk16), .resetn(resetn), .config_backup_type(config_backup_type),
+//     .rv_valid(rv_valid), .rv_addr(rv_addr), .rv_wdata(rv_wdata),
+//     .rv_wstrb(rv_wstrb), .rv_ready(rv_ready), .rv_rdata(rv_rdata),
+//     .mem_addr(rv_mem_addr), .mem_req(rv_mem_req), .mem_ds(rv_mem_ds),
+//     .mem_din(rv_mem_din), .mem_we(rv_mem_we), .mem_req_ack(rv_mem_req_ack),
+//     .mem_dout(rv_mem_dout),
 
-    .eeprom_rd(eeprom_rd), .eeprom_wr(eeprom_wr), .eeprom_addr(eeprom_addr),
-    .eeprom_rdata(eeprom_rdata), .eeprom_wdata(eeprom_wdata)
-);
+//     .eeprom_rd(eeprom_rd), .eeprom_wr(eeprom_wr), .eeprom_addr(eeprom_addr),
+//     .eeprom_rdata(eeprom_rdata), .eeprom_wdata(eeprom_wdata)
+// );
 
-`endif
+// `endif
 
 `ifdef TEST_LOADER
 // test rom, start loading once sdram is ready

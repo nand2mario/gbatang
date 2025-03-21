@@ -35,7 +35,7 @@
  "INCREMENTAL_PLACE_AND_ROUTING" : "0",
  "INCREMENTAL_PLACE_ONLY" : "0",
  "IncludePath" : [
-
+  "F:/Gowin/dev/tangcore/gbatang/src/common"
  ],
  "Incremental_Compile" : "",
  "Initialize_Primitives" : false,
@@ -44,10 +44,10 @@
  "MSPI" : true,
  "MSPI_JUMP" : false,
  "MULTIBOOT_ADDRESS_WIDTH" : "24",
- "MULTIBOOT_MODE" : "Normal",
+ "MULTIBOOT_MODE" : "Single",
  "MULTIBOOT_SPI_FLASH_ADDRESS" : "000000",
  "MULTIJUMP_ADDRESS_WIDTH" : "24",
- "MULTIJUMP_MODE" : "Normal",
+ "MULTIJUMP_MODE" : "Single",
  "MULTIJUMP_SPI_FLASH_ADDRESS" : "000000",
  "Multi_Boot" : false,
  "OUTPUT_BASE_NAME" : "gbatang_console60k_bl616",
@@ -57,7 +57,7 @@
  "PlaceInRegToIob" : true,
  "PlaceIoRegToIob" : true,
  "PlaceOutRegToIob" : true,
- "Place_Option" : "3",
+ "Place_Option" : "2",
  "Process_Configuration_Verion" : "1.0",
  "Promote_Physical_Constraint_Warning_to_Error" : true,
  "READY" : false,
