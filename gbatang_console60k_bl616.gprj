@@ -5,6 +5,7 @@
     <Version>5</Version>
     <Device name="GW5AT-60B" pn="GW5AT-LV60PG484AC1/I0">gw5at60b-002</Device>
     <FileList>
+        <File path="src/m60k/config.v" type="file.verilog" enable="1"/>
         <File path="src/common/dpram32_block.v" type="file.verilog" enable="1"/>
         <File path="src/common/dpram_block.v" type="file.verilog" enable="1"/>
         <File path="src/common/dual_clk_fifo.v" type="file.verilog" enable="1"/>
@@ -46,7 +47,7 @@
         <File path="src/iosys/textdisp.v" type="file.verilog" enable="1"/>
         <File path="src/iosys/uart_fixed.v" type="file.verilog" enable="1"/>
         <File path="src/m138k/fb.v" type="file.verilog" enable="1"/>
-        <File path="src/m60k/config.v" type="file.verilog" enable="1"/>
+        <File path="src/m60k/pll_12.v" type="file.verilog" enable="1"/>
         <File path="src/m60k/pll_27.v" type="file.verilog" enable="1"/>
         <File path="src/m60k/pll_33.v" type="file.verilog" enable="1"/>
         <File path="src/m60k/pll_74.v" type="file.verilog" enable="0"/>
@@ -70,6 +71,7 @@
         <File path="src/sound/gba_sound_ch3.v" type="file.verilog" enable="1"/>
         <File path="src/sound/gba_sound_ch4.v" type="file.verilog" enable="1"/>
         <File path="src/sound/gba_sound_dma.v" type="file.verilog" enable="1"/>
+        <File path="src/usb_hid_host.v" type="file.verilog" enable="1"/>
         <File path="src/console60k/gbatang.cst" type="file.cst" enable="1"/>
         <File path="src/gbatang.sdc" type="file.sdc" enable="1"/>
         <File path="src/eeprom.gao" type="file.gao" enable="0"/>

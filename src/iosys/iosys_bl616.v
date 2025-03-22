@@ -23,10 +23,10 @@ module iosys_bl616 #(
     input [7:0] overlay_x,          // 0-255
     input [7:0] overlay_y,          // 0-223
     output [14:0] overlay_color,    // BGR5
-    input [11:0] joy1,              // DS2/SNES joystick 1: (R L X A RT LT DN UP START SELECT Y B)
-    input [11:0] joy2,              // DS2/SNES joystick 2
-    output reg [15:0] hid1,         // USB HID joystick 1
-    output reg [15:0] hid2,         // USB HID joystick 2
+    input [11:0] joy1,              // FPGA-side joystick 1: (R L X A RT LT DN UP START SELECT Y B)
+    input [11:0] joy2,              // FPGA-side joystick 2
+    output reg [15:0] hid1,         // BL616-side joystick 1
+    output reg [15:0] hid2,         // BL616-side joystick 2
 
     // ROM loading interface
     output reg [7:0] rom_loading,   // 0-to-1 loading starts, 1-to-0 loading is finished

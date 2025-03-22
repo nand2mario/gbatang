@@ -35,6 +35,12 @@ module gbatang_top (
     output ds_mosi,
     output ds_cs,
 
+    // USB1 and USB2
+    inout usb1_dp,
+    inout usb1_dn,
+    inout usb2_dp,
+    inout usb2_dn,
+
     // SDRAM
     output O_sdram_clk,
     output O_sdram_cs_n,            // chip select
@@ -96,6 +102,7 @@ module gbatang_top (
 `ifndef VERILATOR
 wire clk27;         // intermediate 27Mhz clock for HDMI
 wire clk74;
+wire clk12;         // for usb
 // wire clk105;
 // OSC #(.FREQ_DIV(2)) osc (.OSCOUT(clk105));
 // pll_27 pll27(.clkin(clk105), .clkout0(clk27));
@@ -107,6 +114,8 @@ wire clk67, clk67_p;// ram clock:  67.2Mhz
 wire hclk;          // 74.25Mhz hdmi 720p pixel clock
 pll_33 pll33(.clkin(clk27), .clkout0(clk50), .clkout1(clk16), .clkout2(clk67), .clkout3(clk67_p));
 assign O_sdram_clk = clk67_p;
+
+pll_12 pll12(.clkin(sysclk), .clkout0(clk12), .lock(pll_lock_12));
 
 wire [2:0]  loading;
 wire        loader_do_valid;
@@ -440,12 +449,27 @@ gba_timer timer (
 ////////////////////////////
 
 `ifndef VERILATOR
-wire [11:0] joy_btns_gba, joy_btns_iosys;
+wire [11:0] joy_btns_gba, joy_btns_iosys, joy_usb1, joy_usb2;
+wire [1:0] usb_type;
+wire usb_conerr;
 wire [11:0] joy_btns;       // (R L X A RT LT DN UP START SELECT Y B)
 controller_ds2 ds2 (
     .clk(clk16), .snes_buttons(joy_btns),
     .ds_clk(ds_clk), .ds_miso(ds_miso), .ds_mosi(ds_mosi), .ds_cs(ds_cs) 
 );
+
+usb_hid_host usb_hid_host (
+    .usbclk(clk12), .usbrst_n(pll_lock_12),
+    .usb_dm(usb1_dn), .usb_dp(usb1_dp),
+    .typ(usb_type), .conerr(usb_conerr),
+    .game_snes(joy_usb1)
+);
+usb_hid_host usb_hid_host2 (
+    .usbclk(clk12), .usbrst_n(pll_lock_12),
+    .usb_dm(usb2_dn), .usb_dp(usb2_dp),
+    .game_snes(joy_usb2)
+);
+
 `else
 wire [11:0] joy_btns_gba = joy_btns;
 `endif
@@ -471,7 +495,7 @@ wire overlay;
 wire [7:0] overlay_x, overlay_y;
 wire [14:0] overlay_color;
 reg [5:0] ddr_prefetch_delay;
-assign joy_btns_gba = overlay ? 0 : joy_btns | hid1 | hid2;
+assign joy_btns_gba = overlay ? 0 : joy_btns | joy_usb1 | joy_usb2 | hid1 | hid2;
 
 `ifdef M60K
 gba2hdmi_ddr3 video (       // DDR3-based framebuffer
@@ -518,7 +542,7 @@ iosys_bl616 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101), .FREQ(16_650_000)
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
     .core_config(core_config),
-    .joy1(joy_btns), .joy2(12'b0),
+    .joy1(joy_btns | joy_usb1 | joy_usb2), .joy2(12'b0),
     .hid1(hid1), .hid2(hid2),
 
 `ifdef TEST_LOADER
@@ -540,7 +564,8 @@ test_loader loader (
 
 `endif 
 
-assign led = ~{init_calib_complete, overlay, cartram_dirty_clear, cartram_dirty, config_backup_type, gbaon};
+// assign led = ~{init_calib_complete, overlay, cartram_dirty_clear, cartram_dirty, config_backup_type, gbaon};
+assign led = ~{joy_usb1[2:0], usb_conerr, usb_type, init_calib_complete, overlay};
 
 function [3:0] calc_byte_ena (input [1:0] size, input [1:0] addr);
     casez ({size, addr})
