@@ -2,17 +2,19 @@
 // nand2mario, 2025.3
 
 module gba2hdmi_ddr3 (
-	input clk,           // 50Mhz for gba and overlay video/audio input
-    input clk27,
+    input clk27,         // 27Mhz for generating HDMI and DDR3 clocks
 	input resetn,
     output clk_pixel,    // 74.25Mhz pixel clock output
+    input [5:0] ddr_prefetch_delay,
     output init_calib_complete,
 
     // gba video signals
+	input clk,           // 50Mhz for gba and overlay video/audio input
     input [17:0] pixel_data,    // RGB6
     input [7:0] pixel_x,
     input [7:0] pixel_y,
     input pixel_we,
+    input freeze,        // freeze video output (for debug)
 
     // audio input
     input [15:0] sound_left,
@@ -66,41 +68,45 @@ always @(posedge clk) begin
     frame_end <= 0;
     frame_end_r <= frame_end;
 
-    if (!overlay) begin
-        // generate vsync for GBA video
-        if (pixel_we && pixel_x == 239 && pixel_y == 159)
-            frame_end <= 1;
-        vsync <= frame_end_r;
-    end else if (overlay && !overlay_r) begin
-        // init overlay display
-        overlay_x <= 0;
-        overlay_y <= 0;
-        overlay_we <= 0;
-        overlay_cnt <= 0;
-    end else if (overlay) begin
-        // send overlay data to framebuffer
-        // 50Mhz, 8 cycles per pixel -> 109fps
-        // Overlay takes 2x16.7Mhz to generate a pixel. So that's 6 50Mhz cycles.
-        overlay_cnt <= overlay_cnt + 1;
-        case (overlay_cnt)
-        0: begin
-            overlay_x <= overlay_x + 1;
-            if (overlay_x == 255) begin
-                overlay_y <= overlay_y + 1;
-                if (overlay_y == 223) 
-                    overlay_y <= 0;
+    if (~freeze) begin
+        if (!overlay) begin
+            // generate vsync for GBA video
+            if (pixel_we && pixel_x == 239 && pixel_y == 159)
+                frame_end <= 1;
+            vsync <= frame_end_r;
+        end else if (overlay && !overlay_r) begin
+            // init overlay display
+            overlay_x <= 0;
+            overlay_y <= 0;
+            overlay_we <= 0;
+            overlay_cnt <= 0;
+        end else if (overlay) begin
+            // send overlay data to framebuffer
+            // 50Mhz, 8 cycles per pixel -> 109fps
+            // Overlay takes 2x16.7Mhz to generate a pixel. So that's 6 50Mhz cycles.
+            overlay_cnt <= overlay_cnt + 1;
+            case (overlay_cnt)
+            0: begin
+                if (overlay_x == 0 && overlay_y == 0)
+                    vsync <= 1;
             end
-           
-            if (overlay_x == 0 && overlay_y == 0)
-                vsync <= 1;
-        end
 
-        15: begin
-            overlay_we <= 1;
-            overlay_data <= {overlay_color[4:0], 1'b0, overlay_color[9:5], 1'b0, overlay_color[14:10], 1'b0};
+            10: begin
+                overlay_data <= {overlay_color[4:0], 1'b0, overlay_color[9:5], 1'b0, overlay_color[14:10], 1'b0};
+            end
+
+            15: begin
+                overlay_we <= 1;
+                overlay_x <= overlay_x + 1;
+                if (overlay_x == 255) begin
+                    overlay_y <= overlay_y + 1;
+                    if (overlay_y == 223) 
+                        overlay_y <= 0;
+                end
+            end
+            default: ;
+            endcase
         end
-        default: ;
-        endcase
     end
 end
 
@@ -116,6 +122,7 @@ ddr3_framebuffer #(
     .rst_n(resetn),
     .ddr_rst(),
     .init_calib_complete(init_calib_complete),
+    .ddr_prefetch_delay(ddr_prefetch_delay),
     
     // Framebuffer interface
     .clk(clk),

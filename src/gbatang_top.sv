@@ -119,6 +119,8 @@ wire gbaon;         // this is resetn signal for everything gba except memory (n
 wire cartram_dirty_clear;
 wire cartram_dirty;
 
+wire [31:0] core_config;
+
 /* verilator public_on */
 
 // CPU bus signals
@@ -468,22 +470,27 @@ gba_joypad joypad (
 wire overlay;
 wire [7:0] overlay_x, overlay_y;
 wire [14:0] overlay_color;
+reg [5:0] ddr_prefetch_delay;
 assign joy_btns_gba = overlay ? 0 : joy_btns | hid1 | hid2;
 
 `ifdef M60K
 gba2hdmi_ddr3 video (       // DDR3-based framebuffer
-	.clk(clk50), .clk27(clk27), .resetn(resetn), .clk_pixel(hclk), .init_calib_complete(init_calib_complete),
-    .pixel_data(pixel_out_data), .pixel_x(pixel_out_x), .pixel_y(pixel_out_y),
+	.clk27(clk27), .resetn(resetn), .clk_pixel(hclk), 
+    .clk(clk50), .pixel_data(pixel_out_data), .pixel_x(pixel_out_x), .pixel_y(pixel_out_y),
     .pixel_we(pixel_out_we),
     .sound_left(sound_out_left), .sound_right(sound_out_right),
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
+    .freeze(core_config[6]),
 
     .ddr_addr(ddr_addr), .ddr_bank(ddr_bank), .ddr_cs(ddr_cs), .ddr_ras(ddr_ras), .ddr_cas(ddr_cas),
     .ddr_we(ddr_we), .ddr_ck(ddr_ck), .ddr_ck_n(ddr_ck_n), .ddr_cke(ddr_cke), .ddr_odt(ddr_odt),
     .ddr_reset_n(ddr_reset_n), .ddr_dm(ddr_dm), .ddr_dq(ddr_dq), .ddr_dqs(ddr_dqs), .ddr_dqs_n(ddr_dqs_n),
 
 	.tmds_clk_n(tmds_clk_n), .tmds_clk_p(tmds_clk_p), .tmds_d_n(tmds_d_n),
-	.tmds_d_p(tmds_d_p)
+	.tmds_d_p(tmds_d_p),
+
+    .ddr_prefetch_delay(core_config[5:0]),         // allow adjusting DDR3 prefetch delay
+    .init_calib_complete(init_calib_complete)      // 1: ddr3 is ready
 );
 `else
 gba2hdmi video (            // BRAM-based framebuffer
@@ -507,9 +514,10 @@ gba2hdmi video (            // BRAM-based framebuffer
 ////////////////////////////
 
 iosys_bl616 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101), .FREQ(16_650_000)) iosys (
-    .clk(clk16), .hclk(hclk), .resetn(resetn),
+    .clk(clk16), .hclk(clk50), .resetn(resetn),
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
+    .core_config(core_config),
     .joy1(joy_btns), .joy2(12'b0),
     .hid1(hid1), .hid2(hid2),
 
