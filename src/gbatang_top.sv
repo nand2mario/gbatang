@@ -115,8 +115,6 @@ wire hclk;          // 74.25Mhz hdmi 720p pixel clock
 pll_33 pll33(.clkin(clk27), .clkout0(clk50), .clkout1(clk16), .clkout2(clk67), .clkout3(clk67_p));
 assign O_sdram_clk = clk67_p;
 
-pll_12 pll12(.clkin(sysclk), .clkout0(clk12), .lock(pll_lock_12));
-
 wire [2:0]  loading;
 wire        loader_do_valid;
 wire [7:0]  loader_do;
@@ -458,19 +456,29 @@ controller_ds2 ds2 (
     .ds_clk(ds_clk), .ds_miso(ds_miso), .ds_mosi(ds_mosi), .ds_cs(ds_cs) 
 );
 
+`ifdef USB1
+pll_12 pll12(.clkin(sysclk), .clkout0(clk12), .lock(pll_lock_12));
 usb_hid_host usb_hid_host (
     .usbclk(clk12), .usbrst_n(pll_lock_12),
     .usb_dm(usb1_dn), .usb_dp(usb1_dp),
     .typ(usb_type), .conerr(usb_conerr),
     .game_snes(joy_usb1)
 );
+`else
+assign joy_usb1 = 12'b0;
+`endif
+
+`ifdef USB2
 usb_hid_host usb_hid_host2 (
     .usbclk(clk12), .usbrst_n(pll_lock_12),
     .usb_dm(usb2_dn), .usb_dp(usb2_dp),
     .game_snes(joy_usb2)
 );
-
 `else
+assign joy_usb2 = 12'b0;
+`endif
+
+`else          // VERILATOR
 wire [11:0] joy_btns_gba = joy_btns;
 `endif
 
@@ -516,6 +524,7 @@ gba2hdmi_ddr3 video (       // DDR3-based framebuffer
     .ddr_prefetch_delay(core_config[5:0]),         // allow adjusting DDR3 prefetch delay
     .init_calib_complete(init_calib_complete)      // 1: ddr3 is ready
 );
+assign led = ~{joy_usb1[2:0], usb_conerr, usb_type, init_calib_complete, overlay};
 `else
 gba2hdmi video (            // BRAM-based framebuffer
 	.clk(clk50), .clk27(clk27), .resetn(resetn), .clk_pixel(hclk),
@@ -565,7 +574,6 @@ test_loader loader (
 `endif 
 
 // assign led = ~{init_calib_complete, overlay, cartram_dirty_clear, cartram_dirty, config_backup_type, gbaon};
-assign led = ~{joy_usb1[2:0], usb_conerr, usb_type, init_calib_complete, overlay};
 
 function [3:0] calc_byte_ena (input [1:0] size, input [1:0] addr);
     casez ({size, addr})

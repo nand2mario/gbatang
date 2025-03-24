@@ -21,6 +21,12 @@ if {$dev eq "mega60k"} {
     add_file -type verilog "src/m60k/pll_27.v"
     add_file -type verilog "src/m60k/pll_33.v"
     add_file -type verilog "src/m60k/pll_74.v"
+    add_file -type verilog "src/m60k/pll_ddr3.v"
+    add_file -type verilog "src/m60k/pll_hdmi.v"
+    add_file -type verilog "src/m60k/pll_mDRP_intf.v"
+    add_file -type verilog "src/gba2hdmi_ddr3.sv"
+    add_file -type verilog "src/ddr3_framebuffer.v"
+    add_file -type verilog "src/ddr3_memory_interface/ddr3_memory_interface.v"
  } elseif {$dev eq "mega138k"} {
     set_device GW5AST-LV138PG484AC1/I0 -device_version B
     add_file -type cst "src/m138k/m138k.cst"
@@ -30,6 +36,7 @@ if {$dev eq "mega60k"} {
     add_file -type verilog "src/m138k/pll_27.v"
     add_file -type verilog "src/m138k/pll_33.v"
     add_file -type verilog "src/m138k/pll_74.v"
+    add_file -type verilog "src/gba2hdmi.sv"
  } elseif {$dev eq "mega138kpro"} {
     set_device GW5AST-LV138FPG676AC1/I0 -device_version B
     add_file -type cst "src/m138k/m138kpro.cst"
@@ -39,6 +46,7 @@ if {$dev eq "mega60k"} {
     add_file -type verilog "src/m138k/pll_27.v"
     add_file -type verilog "src/m138k/pll_33.v"
     add_file -type verilog "src/m138k/pll_74.v"
+    add_file -type verilog "src/gba2hdmi.sv"
  } elseif {$dev eq "console60k"} {
     set_device GW5AT-LV60PG484AC1/I0 -device_version B
     add_file -type cst "src/console60k/gbatang.cst"
@@ -46,13 +54,20 @@ if {$dev eq "mega60k"} {
     add_file "src/m60k/config.v"
     add_file -type verilog "src/m60k/pll_27.v"
     add_file -type verilog "src/m60k/pll_33.v"
-    add_file -type verilog "src/m60k/pll_74.v"
+   #  add_file -type verilog "src/m60k/pll_74.v"
+    add_file -type verilog "src/usb_hid_host.v"
+    add_file -type verilog "src/m60k/pll_12.v"
+    add_file -type verilog "src/m60k/pll_ddr3.v"
+    add_file -type verilog "src/m60k/pll_hdmi.v"
+    add_file -type verilog "src/m60k/pll_mDRP_intf.v"
+    add_file -type verilog "src/gba2hdmi_ddr3.sv"
+    add_file -type verilog "src/ddr3_framebuffer.v"
+    add_file -type verilog "src/ddr3_memory_interface/ddr3_memory_interface.v"
  } else {
     error "Unknown device $dev"
 }
 
 set_option -output_base_name gbatang_${dev}
-
 
 if {$mcu eq "bl616"} {
    add_file -type verilog "src/iosys/iosys_bl616.v"
@@ -78,7 +93,6 @@ add_file -type verilog "src/common/gba_bios.sv"
 add_file -type verilog "src/cpu/gba_cpu.v"
 add_file -type verilog "src/cpu/gba_cpu_thumbdecoder.v"
 add_file -type verilog "src/cpu/gba_interrupts.v"
-add_file -type verilog "src/gba2hdmi.sv"
 add_file -type verilog "src/gbatang_top.sv"
 add_file -type verilog "src/gpu/gba_drawer_merge.v"
 add_file -type verilog "src/gpu/gba_drawer_mode0.v"
@@ -139,6 +153,6 @@ set_option -use_mspi_as_gpio 1
 set_option -use_cpu_as_gpio 1
 
 # use the slower but timing-optimized place algorithm
-set_option -place_option 3
+set_option -place_option 2
 
 run all

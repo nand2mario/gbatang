@@ -23,8 +23,8 @@ set_multicycle_path 4 -setup -end -from [get_pins {sdram/cpu_rdata*/*}] -to [get
 set_multicycle_path 3 -hold -end -from [get_pins {sdram/cpu_rdata*/*}] -to [get_clocks {clk67}]
 
 # HDMI clocks
-create_clock -name hclk5 -period 2.694 -waveform {0 1.347} [get_nets {video/fb/hclk5}]
-create_generated_clock -name hclk -source [get_nets {video/fb/hclk5}] -master_clock hclk5 -divide_by 5 [get_nets {video/fb/hclk}]
+# create_clock -name hclk5 -period 2.694 -waveform {0 1.347} [get_nets {video/fb/hclk5}]
+# create_generated_clock -name hclk -source [get_nets {video/fb/hclk5}] -master_clock hclk5 -divide_by 5 [get_nets {video/fb/hclk}]
 
 # 3-cycle path from CPU to GPU as GPU uses data on rising edge of clk16
 set_multicycle_path 3 -setup -end -from [get_clocks {clk16}] -to [get_clocks {clk50}]
