@@ -524,7 +524,7 @@ gba2hdmi_ddr3 video (       // DDR3-based framebuffer
     .ddr_prefetch_delay(core_config[5:0]),         // allow adjusting DDR3 prefetch delay
     .init_calib_complete(init_calib_complete)      // 1: ddr3 is ready
 );
-assign led = ~{joy_usb1[2:0], usb_conerr, usb_type, init_calib_complete, overlay};
+assign led = ~{joy_usb1[2:0], init_calib_complete, overlay, usb_conerr, usb_type};
 `else
 gba2hdmi video (            // BRAM-based framebuffer
 	.clk(clk50), .clk27(clk27), .resetn(resetn), .clk_pixel(hclk),
