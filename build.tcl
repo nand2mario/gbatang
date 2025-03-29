@@ -1,87 +1,69 @@
 if {$argc == 0} {
-    puts "Usage: $argv0 <device> [<mcu>]"
-    puts "          device: mega60k, mega138k, mega138kpro, console60k"
-    puts "          mcu: bl616, picorv32"
+    puts "Usage: $argv0 <device>"
+    puts "          device: console60k, console138k, mega60k, mega138k, mega138kpro"
+    puts "Controllers: ds2 on all boards, and also usb on console boards"
     exit 1
 }
 
 set dev [lindex $argv 0]
 
-if {$argc >= 2} {
-    set mcu [lindex $argv 1]
-} else {
-    set mcu "bl616"
-}
+if {$dev eq "console60k" || $dev eq "mega60k"} {
+   set_device GW5AT-LV60PG484AC1/I0 -device_version B
+   if {$dev eq "console60k"} {
+      add_file -type cst "src/boards/console60k.cst"
+      add_file "src/boards/console60k.v"
+   } else {
+      add_file -type cst "src/boards/mega.cst"
+      add_file "src/boards/mega60k.v"
+   }
+   add_file -type sdc "src/gbatang.sdc"
+   add_file -type verilog "src/plla/pll_27.v"
+   add_file -type verilog "src/plla/pll_33.v"
+   add_file -type verilog "src/plla/pll_12.v"
+   # 60K uses DDR3 framebuffer
+   add_file -type verilog "src/plla/pll_ddr3.v"
+   add_file -type verilog "src/plla/pll_hdmi.v"
+   add_file -type verilog "src/plla/pll_mDRP_intf.v"
 
-if {$dev eq "mega60k"} {
-    set_device GW5AT-LV60PG484AC1/I0 -device_version B
-    add_file -type cst "src/m60k/m60k.cst"
-    add_file -type sdc "src/gbatang.sdc"
-    add_file "src/m60k/config.v"
-    add_file -type verilog "src/m60k/pll_27.v"
-    add_file -type verilog "src/m60k/pll_33.v"
-    add_file -type verilog "src/m60k/pll_74.v"
-    add_file -type verilog "src/m60k/pll_ddr3.v"
-    add_file -type verilog "src/m60k/pll_hdmi.v"
-    add_file -type verilog "src/m60k/pll_mDRP_intf.v"
-    add_file -type verilog "src/gba2hdmi_ddr3.sv"
-    add_file -type verilog "src/ddr3_framebuffer.v"
-    add_file -type verilog "src/ddr3_memory_interface/ddr3_memory_interface.v"
- } elseif {$dev eq "mega138k"} {
-    set_device GW5AST-LV138PG484AC1/I0 -device_version B
-    add_file -type cst "src/m138k/m138k.cst"
-    add_file -type sdc "src/gbatang.sdc"
+   add_file -type verilog "src/usb_hid_host.v"
+   add_file -type verilog "src/gba2hdmi_ddr3.sv"
+   add_file -type verilog "src/ddr3_framebuffer.v"
+   add_file -type verilog "src/ddr3_memory_interface/ddr3_memory_interface.v"
+ } elseif {$dev eq "console138k" || $dev eq "mega138k" || $dev eq "mega138kpro"} {
+   if {$dev eq "console138k"} {
+      set_device GW5AST-LV138PG484AC1/I0 -device_version B
+      add_file -type cst "src/boards/console138k.cst"
+      add_file "src/boards/console138k.v"
+   } elseif {$dev eq "mega138k"} {
+      set_device GW5AST-LV138PG484AC1/I0 -device_version B
+      add_file -type cst "src/boards/mega.cst"
+      add_file "src/boards/mega138k.v"
+   } else {
+      set_device GW5AST-LV138FPG676AC1/I0 -device_version B
+      add_file -type cst "src/boards/mega138kpro.cst"
+      add_file "src/boards/mega138kpro.v"
+   }
+   add_file -type sdc "src/gbatang.sdc"
 
-    add_file -type verilog "src/m138k/config.v"
-    add_file -type verilog "src/m138k/pll_27.v"
-    add_file -type verilog "src/m138k/pll_33.v"
-    add_file -type verilog "src/m138k/pll_74.v"
-    add_file -type verilog "src/gba2hdmi.sv"
- } elseif {$dev eq "mega138kpro"} {
-    set_device GW5AST-LV138FPG676AC1/I0 -device_version B
-    add_file -type cst "src/m138k/m138kpro.cst"
-    add_file -type sdc "src/gbatang.sdc"
+   add_file -type verilog "src/pll/pll_27.v"
+   add_file -type verilog "src/pll/pll_33.v"
+   add_file -type verilog "src/pll/pll_74.v"
+   add_file -type verilog "src/pll/pll_12.v"
 
-    add_file -type verilog "src/m138k/config.v"
-    add_file -type verilog "src/m138k/pll_27.v"
-    add_file -type verilog "src/m138k/pll_33.v"
-    add_file -type verilog "src/m138k/pll_74.v"
-    add_file -type verilog "src/gba2hdmi.sv"
- } elseif {$dev eq "console60k"} {
-    set_device GW5AT-LV60PG484AC1/I0 -device_version B
-    add_file -type cst "src/console60k/gbatang.cst"
-    add_file -type sdc "src/gbatang.sdc"
-    add_file "src/m60k/config.v"
-    add_file -type verilog "src/m60k/pll_27.v"
-    add_file -type verilog "src/m60k/pll_33.v"
-   #  add_file -type verilog "src/m60k/pll_74.v"
-    add_file -type verilog "src/usb_hid_host.v"
-    add_file -type verilog "src/m60k/pll_12.v"
-    add_file -type verilog "src/m60k/pll_ddr3.v"
-    add_file -type verilog "src/m60k/pll_hdmi.v"
-    add_file -type verilog "src/m60k/pll_mDRP_intf.v"
-    add_file -type verilog "src/gba2hdmi_ddr3.sv"
-    add_file -type verilog "src/ddr3_framebuffer.v"
-    add_file -type verilog "src/ddr3_memory_interface/ddr3_memory_interface.v"
+   add_file -type verilog "src/usb_hid_host.v"
+
+   # 138K uses BRAM framebuffer
+   add_file -type verilog "src/fb.v"
+   add_file -type verilog "src/gba2hdmi.sv"
  } else {
     error "Unknown device $dev"
 }
 
 set_option -output_base_name gbatang_${dev}
 
-if {$mcu eq "bl616"} {
-   add_file -type verilog "src/iosys/iosys_bl616.v"
-   add_file -type verilog "src/iosys/uart_fixed.v"
-} elseif {$mcu eq "picorv32"} {
-   add_file -type verilog "src/iosys/iosys_picorv32.v"
-   add_file -type verilog "src/iosys/picorv32.v"
-   add_file -type verilog "src/iosys/simplespimaster.v"
-   add_file -type verilog "src/iosys/simpleuart.v"
-   add_file -type verilog "src/iosys/spi_master.v"
-   add_file -type verilog "src/iosys/spiflash.v"
-} else {
-    error "Unknown mcu $mcu"
-}
+add_file -type verilog "src/iosys/iosys_bl616.v"
+add_file -type verilog "src/iosys/uart_fixed.v"
+
 add_file -type verilog "src/iosys/textdisp.v"
 add_file -type verilog "src/iosys/gowin_dpb_menu.v"
 
@@ -135,8 +117,6 @@ add_file -type verilog "src/sound/gba_sound_ch1.v"
 add_file -type verilog "src/sound/gba_sound_ch3.v"
 add_file -type verilog "src/sound/gba_sound_ch4.v"
 add_file -type verilog "src/sound/gba_sound_dma.v"
-add_file -type verilog "src/m138k/fb.v"
-
 
 #add_file -type verilog "src/test_loader.v"
 
