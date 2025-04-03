@@ -1,6 +1,6 @@
 `define CONFIG_H
 
-`define M60K
+`define DDR3_FRAMEBUFFER
 
 package configPackage;  
 endpackage

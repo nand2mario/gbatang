@@ -16,7 +16,7 @@ if {$dev eq "console60k" || $dev eq "mega60k"} {
       add_file -type cst "src/boards/mega.cst"
       add_file "src/boards/mega60k.v"
    }
-   add_file -type sdc "src/gbatang.sdc"
+   add_file -type sdc "src/gbatang_ddr.sdc"
    add_file -type verilog "src/plla/pll_27.v"
    add_file -type verilog "src/plla/pll_33.v"
    add_file -type verilog "src/plla/pll_12.v"

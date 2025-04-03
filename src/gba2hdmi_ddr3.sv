@@ -113,7 +113,8 @@ end
 ddr3_framebuffer #(
     .WIDTH(256),
     .HEIGHT(224),
-    .COLOR_BITS(18)
+    .COLOR_BITS(18),
+    .PREFETCH_DELAY(44)
 ) fb (
     .clk_27(clk27),
     .pll_lock_27(1'b1),

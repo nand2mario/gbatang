@@ -14,20 +14,20 @@ module gbatang_top (
     input sysclk,                   // 50Mhz
 
     // MicroSD
-    output sd_clk,
-    inout  sd_cmd,                  // MOSI
-    input  sd_dat0,                 // MISO
-    output sd_dat1,
-    output sd_dat2,
-    output sd_dat3,
+    // output sd_clk,
+    // inout  sd_cmd,                  // MOSI
+    // input  sd_dat0,                 // MISO
+    // output sd_dat1,
+    // output sd_dat2,
+    // output sd_dat3,
 
     // SPI flash
-    output flash_spi_cs_n,          // chip select
-    input flash_spi_miso,           // master in slave out
-    output flash_spi_mosi,          // mster out slave in
-    output flash_spi_clk,           // spi clock
-    output flash_spi_wp_n,          // write protect
-    output flash_spi_hold_n,        // hold operations
+    // output flash_spi_cs_n,          // chip select
+    // input flash_spi_miso,           // master in slave out
+    // output flash_spi_mosi,          // mster out slave in
+    // output flash_spi_clk,           // spi clock
+    // output flash_spi_wp_n,          // write protect
+    // output flash_spi_hold_n,        // hold operations
 
     // dualshock controller on pmod0
     output ds_clk,
@@ -52,7 +52,7 @@ module gbatang_top (
     output [1:0] O_sdram_dqm,       // 
     output [1:0] O_sdram_ba,        // 4 banks
 
-`ifdef M60K
+`ifdef DDR3_FRAMEBUFFER
     // DDR3 interface
     output [14:0] ddr_addr,
     output [2:0] ddr_bank,
@@ -505,7 +505,7 @@ wire [14:0] overlay_color;
 reg [5:0] ddr_prefetch_delay;
 assign joy_btns_gba = overlay ? 0 : joy_btns | joy_usb1 | joy_usb2 | hid1 | hid2;
 
-`ifdef M60K
+`ifdef DDR3_FRAMEBUFFER
 gba2hdmi_ddr3 video (       // DDR3-based framebuffer
 	.clk27(clk27), .resetn(resetn), .clk_pixel(hclk), 
     .clk(clk50), .pixel_data(pixel_out_data), .pixel_x(pixel_out_x), .pixel_y(pixel_out_y),
