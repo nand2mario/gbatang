@@ -36,7 +36,7 @@ if {$dev eq "console60k" || $dev eq "mega60k"} {
       add_file "src/boards/console138k.v"
    } elseif {$dev eq "mega138k"} {
       set_device GW5AST-LV138PG484AC1/I0 -device_version B
-      add_file -type cst "src/boards/mega.cst"
+      add_file -type cst "src/boards/mega138k.cst"
       add_file "src/boards/mega138k.v"
    } else {
       set_device GW5AST-LV138FPG676AC1/I0 -device_version B
