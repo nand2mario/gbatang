@@ -101,7 +101,6 @@ module gbatang_top (
 // Clocking
 `ifndef VERILATOR
 wire clk27;         // intermediate 27Mhz clock for HDMI
-wire clk74;
 wire clk12;         // for usb
 // wire clk105;
 // OSC #(.FREQ_DIV(2)) osc (.OSCOUT(clk105));
@@ -547,7 +546,7 @@ gba2hdmi video (            // BRAM-based framebuffer
 ////////////////////////////
 
 iosys_bl616 #(.CORE_ID(3), .COLOR_LOGO(15'b01111_01100_10101), .FREQ(16_650_000)) iosys (
-    .clk(clk16), .hclk(clk50), .resetn(resetn),
+    .clk(clk16), .hclk(hclk), .resetn(resetn),
 
     .overlay(overlay), .overlay_x(overlay_x), .overlay_y(overlay_y), .overlay_color(overlay_color),
     .core_config(core_config),
