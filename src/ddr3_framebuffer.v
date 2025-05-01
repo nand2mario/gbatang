@@ -78,7 +78,7 @@ module ddr3_framebuffer #(
 // Clocks
 wire hclk, hclk5;
 wire memory_clk;
-wire clk_x1;
+wire clk_x1 /* synthesis syn_keep=1 */;
 assign clk_out = clk_x1;
 wire pll_lock;
 
