@@ -82,21 +82,21 @@ always @(posedge clk) begin
             overlay_cnt <= 0;
         end else if (overlay) begin
             // send overlay data to framebuffer
-            // 50Mhz, 8 cycles per pixel -> 109fps
-            // Overlay takes 2x16.7Mhz to generate a pixel. So that's 6 50Mhz cycles.
-            overlay_cnt <= overlay_cnt + 1;
+            // overlay runs at clk50
+            // 15 clk50 cycles per pixel, 57.3K pixels -> 58fps
+            overlay_cnt <= overlay_cnt == 14 ? 0 : overlay_cnt + 1;
             case (overlay_cnt)
             0: begin
                 if (overlay_x == 0 && overlay_y == 0)
                     vsync <= 1;
             end
 
-            10: begin
+            12: begin
                 overlay_data <= {overlay_color[4:0], 1'b0, overlay_color[9:5], 1'b0, overlay_color[14:10], 1'b0};
+                overlay_we <= 1;
             end
 
-            15: begin
-                overlay_we <= 1;
+            14: begin
                 overlay_x <= overlay_x + 1;
                 if (overlay_x == 255) begin
                     overlay_y <= overlay_y + 1;

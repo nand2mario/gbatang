@@ -80,5 +80,6 @@
         <File path="src/gbatang.gao" type="file.gao" enable="0"/>
         <File path="src/gpu.gao" type="file.gao" enable="0"/>
         <File path="src/iosys.gao" type="file.gao" enable="0"/>
+        <File path="src/overlay.rao" type="file.gao" enable="0"/>
     </FileList>
 </Project>
