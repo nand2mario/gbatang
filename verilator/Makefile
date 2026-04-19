@@ -17,8 +17,15 @@ INCLUDES=-I$D -I$D/arm -I$D/common
 CFLAGS_SDL=$(shell sdl2-config --cflags) -g -O3
 LIBS_SDL=$(shell sdl2-config --libs) -g
 
-.PHONY: build sim verilate clean gtkwave audio
-	
+# Fast build: no trace, higher opt, multi-threaded.
+# Usage:  make fast   (builds obj_dir_fast/Vgbatang_top)
+#         make build  (normal build with --trace-fst for gtkwave)
+CFLAGS_FAST=$(shell sdl2-config --cflags) -O3 -DNDEBUG -DVERILATOR_FAST
+LIBS_FAST=$(shell sdl2-config --libs)
+VL_THREADS?=4
+
+.PHONY: build sim verilate clean gtkwave audio fast verilate-fast build-fast
+
 build: ./obj_dir/V$N
 
 verilate: ./obj_dir/V$N.cpp
@@ -34,6 +41,27 @@ verilate: ./obj_dir/V$N.cpp
 	@echo
 	@echo "### BUILDING SIM ###"
 	make -C obj_dir -f V$N.mk V$N
+
+# --- fast path (no tracing, -O3, threaded) -----------------------------------
+
+fast: ./obj_dir_fast/V$N
+
+verilate-fast: ./obj_dir_fast/V$N.cpp
+
+./obj_dir_fast/V$N.cpp: sim_main.cpp $(SRCS) $(DEPS)
+	@echo
+	@echo "### VERILATE (fast: no trace, -O3, threads=$(VL_THREADS)) ###"
+	mkdir -p obj_dir_fast
+	verilator --top-module $N +define+CONFIG_H +define+VERILATOR_FAST \
+		-O3 --threads $(VL_THREADS) --Mdir obj_dir_fast \
+		-Wno-WIDTH -Wno-PINMISSING -Wno-UNOPTFLAT -Wno-BLKLOOPINIT -Wno-MULTIDRIVEN \
+		-cc --exe -CFLAGS "$(CFLAGS_FAST)" -LDFLAGS "$(LIBS_FAST)" \
+		$(INCLUDES) $(SRCS) sim_main.cpp
+
+./obj_dir_fast/V$N: verilate-fast
+	@echo
+	@echo "### BUILDING SIM (fast) ###"
+	make -j$(VL_THREADS) -C obj_dir_fast -f V$N.mk V$N OPT_FAST="-O3 -DNDEBUG"
 
 sim: ./obj_dir/V$N
 	@echo
@@ -52,4 +80,4 @@ audio:
 	ffmpeg -y -f s16le -ar 48k -ac 2 -i gba.aud gba.wav
 
 clean:
-	rm -rf obj_dir
+	rm -rf obj_dir obj_dir_fast
