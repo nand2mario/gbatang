@@ -5,7 +5,7 @@
 //`define TEST_LOADER
 
 `ifndef CONFIG_H
-`error("config.v has to be processed before gbatang_top.sv")
+`error "config.v has to be processed before gbatang_top.sv"
 `endif
 
 module gbatang_top (
